@@ -28,7 +28,8 @@ class Action_MainWindow(QMainWindow):
             QMessageBox.No, QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-            sys.exit()
+            # sys.exit()
+            self.close()
         else:
             print("2333")
 

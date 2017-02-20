@@ -1,0 +1,12 @@
+{
+  "maxClients" : "10",
+  "minClients" : "2",
+  "database" : {
+    "mysql" : {
+      "db_host" : "127.0.0.1",
+      "db_port" : "3306",
+      "db_user" : "root",
+      "db_password" : "1234"
+    }
+  }
+}

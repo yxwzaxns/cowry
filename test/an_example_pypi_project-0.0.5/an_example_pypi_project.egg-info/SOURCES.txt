@@ -1,0 +1,13 @@
+README
+setup.cfg
+setup.py
+an_example_pypi_project/__init__.py
+an_example_pypi_project/useful_1.py
+an_example_pypi_project/useful_2.py
+an_example_pypi_project.egg-info/PKG-INFO
+an_example_pypi_project.egg-info/SOURCES.txt
+an_example_pypi_project.egg-info/dependency_links.txt
+an_example_pypi_project.egg-info/top_level.txt
+tests/__init__.py
+tests/run_all.py
+tests/test0.py
