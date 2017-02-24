@@ -1,1 +1,3 @@
-import t1   
+__all__ = 't3'
+
+from demo.t1 import m1
