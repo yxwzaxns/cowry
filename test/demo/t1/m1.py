@@ -1,3 +1,3 @@
-import t4
-def pf(arg):
-    print(arg,t4.T)
+import sys
+if __name__ == '__main__':
+    print(sys.argv)
