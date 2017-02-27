@@ -1,5 +1,3 @@
-class C1(object):
-    """docstring for C1."""
-    def __init__(self):
-        super(C1, self).__init__()
-        print('c1')
+import t4
+def pf(arg):
+    print(arg,t4.T)

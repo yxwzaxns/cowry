@@ -1,6 +1,7 @@
 import socket, ssl
 import json, random
 from ast import literal_eval
+from config import Settings
 # from utils import *
 
 class Client(object):
@@ -9,13 +10,16 @@ class Client(object):
         super(Client, self).__init__()
         if arg:
             self.__dict__.update(arg)
-
+        self.sslContext = ssl.create_default_context()
+        self.sslContext.load_verify_locations('./pubkey/server.crt')
 
     msgCode = ('login','logout','refresh','list','get','put')
     userName = 'admin'
     passWord = 'admin888'
     host = '127.0.0.1'
     port = 2333
+
+    sslContext = ''
 
     ctrlSock = ''
     ctrlSockPort = ''
@@ -30,9 +34,7 @@ class Client(object):
     def createConnection(self):
         try:
             tmpSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.ctrlSock = ssl.wrap_socket(tmpSock,
-                           ca_certs="./pubkey/server.crt",
-                           cert_reqs=ssl.CERT_REQUIRED)
+            self.ctrlSock = self.sslContext.wrap_socket(tmpSock, server_hostname = self.host)
             self.ctrlSock.connect((self.host, self.port))
         except Exception as e:
             return (1,str(e))
@@ -55,6 +57,7 @@ class Client(object):
             func(self, msg)
             print(self.recvInfo)
             if self.recvInfo['code'] == self.lastCmdCode:
+            # if True:
                 return (0,'login successd')
             else:
                 return (1,'lastCmdCode is not same, login fails')
@@ -66,6 +69,7 @@ class Client(object):
         try:
             self.ctrlSock.send(msg)
             self.recvInfo = literal_eval(self.ctrlSock.recv(1024).decode('utf8'))
+            print(self.recvInfo)
         except Exception as e:
             return (0,str(e))
 

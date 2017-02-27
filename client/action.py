@@ -51,7 +51,7 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
         else:
             print(type(connectInfo),type(connectInfo[1]),connectInfo)
             self.infoList.addItem(connectInfo[1])
-            self.client.close()
+            # self.client.close()
         self.infoList.scrollToBottom()
 
     def logout(self, arg):

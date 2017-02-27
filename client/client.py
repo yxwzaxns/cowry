@@ -14,6 +14,7 @@ from action import Action_MainWindow
     # sys.exit(app.exec_())
 
 if __name__ == '__main__':
+	sys.path.append('./')
 	app = QApplication(sys.argv)
 	prog = Action_MainWindow()
 	prog.show()
