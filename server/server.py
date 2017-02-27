@@ -10,7 +10,7 @@ sslContext.load_cert_chain(certfile="./certs/server.crt", keyfile="./certs/serve
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 # bind the socket to a public host, and a well-known port
-serverSocket.bind((sys.argv[1] or '127.0.0.1', argv[2] or 2333))
+serverSocket.bind((sys.argv[1] or '127.0.0.1', sys.argv[2] or 2333))
 # become a server socket
 serverSocket.listen(5)
 
