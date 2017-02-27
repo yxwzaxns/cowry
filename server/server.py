@@ -32,8 +32,8 @@ def clientWorker(clientSocket, address):
         print("complete")
     except Exception as e:
         print(e)
-        connstream.shutdown(socket.SHUT_RDWR)
-        connstream.close()
+        client.shutdown(socket.SHUT_RDWR)
+        client.close()
 
 while True:
     (clientSocket, clientAddress) = serverSocket.accept()
