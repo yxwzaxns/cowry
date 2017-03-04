@@ -1,9 +1,5 @@
-class Base(object):
-    b = 1
-    # @staticmethod
-    def fun(self,a):
-        print(a,Base.b)
-
-Base.fun('a')
-a=Base()
-a.fun('a')
+        self.fileTree.topLevelItem(0).setText(0, _translate("MainWindow", "/"))
+        self.fileTree.topLevelItem(0).child(1).setText(0, _translate("MainWindow", "sw"))
+        self.fileTree.topLevelItem(0).child(1).setText(1, _translate("MainWindow", "a"))
+        self.fileTree.topLevelItem(0).child(1).setText(2, _translate("MainWindow", "a"))
+        self.fileTree.topLevelItem(0).child(1).setText(3, _translate("MainWindow", "a"))

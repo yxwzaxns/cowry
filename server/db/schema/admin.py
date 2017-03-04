@@ -1,12 +1,12 @@
-__package__ = 'Users'
+__package__ = 'Admin'
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String
 
 Base = declarative_base()
 
-class Users(Base):
-    __tablename__ = 'users'
+class Admin(Base):
+    __tablename__ = 'admins'
 
     id = Column(Integer, primary_key=True)
     username = Column(String(10))

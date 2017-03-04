@@ -1,3 +1,3 @@
-__all__ = ["users", "admins", "files"]
+__all__ = ["user", "admin", "file"]
 
 from db.schema import *

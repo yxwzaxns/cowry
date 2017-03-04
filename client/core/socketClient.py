@@ -1,17 +1,18 @@
 import socket, ssl
-import json, random
+import json, random, logging
 from ast import literal_eval
 from config import Settings
 # from utils import *
 
-class Client(object):
+class SocketClient(object):
     """docstring for Client."""
     def __init__(self, **arg):
-        super(Client, self).__init__()
+        super(SocketClient, self).__init__()
         if arg:
             self.__dict__.update(arg)
-        self.sslContext = ssl.create_default_context()
-        self.sslContext.load_verify_locations('./pubkey/server.crt')
+        self.createSslConttext()
+        self.createConnection()
+
 
     msgCode = ('login','logout','refresh','list','get','put')
     userName = 'admin'
@@ -28,65 +29,69 @@ class Client(object):
     dataSockPort = ''
 
     recvInfo = None
+    lastCmd = ''
     lastCmdCode = ''
     certInfo = ''
 
     def createConnection(self):
+        logging.warning('start createConnection')
         try:
             tmpSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.ctrlSock = self.sslContext.wrap_socket(tmpSock, server_hostname = self.host)
+            self.ctrlSock = self.sslContext.wrap_socket(tmpSock, server_hostname = '127.0.0.1')
             self.ctrlSock.connect((self.host, self.port))
         except Exception as e:
-            return (1,str(e))
+            logging.warning(str(e))
         else:
             self.certInfo = str(self.ctrlSock.cipher())
-            return (0,'connecting to remote host ...')
+            logging.warning('connecting to remote host ...')
 
+    def createSslConttext(self):
+        self.sslContext = ssl.create_default_context()
+        self.sslContext.load_verify_locations('./pubkey/server.crt')
 
     def login(self):
-        msg = { 'info' : 'login', 'code' : '1234', 'u' : self.userName, 'p' : self.passWord }
-        return self.sendMsg(msg)
+        pass
 
 
     def sendFile(self):
         pass
 
     def checkCmdCode(func):
-        def wrapper(self, msg):
-            self.lastCmdCode = '123'
-            func(self, msg)
-            print(self.recvInfo)
-            if self.recvInfo['code'] == self.lastCmdCode:
-            # if True:
-                return (0,'login successd')
-            else:
-                return (1,'lastCmdCode is not same, login fails')
+        def wrapper(self):
+            func(self)
+            if self.recvInfo['code'] != self.lastCmdCode:
+                print('lastCmdCode is not same, login fails')
         return wrapper
 
-    @checkCmdCode
+    def setupCmdCode(func):
+        def wrapper(self, msg):
+            self.lastCmdCode = str(random.randrange(10000,99999))
+            msg['code'] = self.lastCmdCode
+            print('setup cmd code')
+            func(self, msg)
+        return wrapper
+
+    @setupCmdCode
     def sendMsg(self, msg):
+        self.lastCmd = msg
         msg = str.encode(str(msg))
-        try:
-            self.ctrlSock.send(msg)
-            self.recvInfo = literal_eval(self.ctrlSock.recv(1024).decode('utf8'))
-            print(self.recvInfo)
-        except Exception as e:
-            return (0,str(e))
+        self.ctrlSock.send(msg)
+        print('send info : ', msg)
+
+    @checkCmdCode
+    def recvMsg(self):
+        recvInfo = self.ctrlSock.recv(1024).strip()
+        self.recvInfo = literal_eval(recvInfo.decode('utf8'))
+        print('recv info ', recvInfo)
 
     def logout(self):
-        try:
-            self.ctrlSock.close()
-        except Exception as e:
-            return (1,str(e))
-        else:
-            return (0,'Logout Compeletly')
+        pass
 
     def reconnect(self):
-        self.logout()
-        self.login()
+        pass
 
-
-    def close(self):
+    def _close(self):
+        self.ctrlSock.shutdown(socket.SHUT_RDWR)
         self.ctrlSock.close()
 
     @staticmethod
