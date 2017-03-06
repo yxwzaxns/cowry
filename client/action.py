@@ -4,7 +4,8 @@ from PyQt5 import QtWidgets
 from core.ftpClient import FTPClient
 from mainwindow import Ui_MainWindow
 from upload import Ui_UploadFileDialog
-import logging
+from core.upload import Upload
+from core.syslog import Syslog
 
 class Action_MainWindow(QMainWindow, Ui_MainWindow):
     """docstring for Action_MainWindow."""
@@ -15,9 +16,10 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
         self.setupUi(self)
-        logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
         self.Setdefaultinfo.triggered.connect(self.setdefaultinfo)
         self.Setlist.triggered.connect(self.setlist)
+        self.Download_2.triggered.connect(self.test)
+        self.log = Syslog()
         # self.Infolist.scrollToBottom()
 
     def getinfo(self):
@@ -33,6 +35,14 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
 
        retval = msg.exec_()
     #    print("value of pressed message box button:", retval)
+    def auth(func):
+        def wrapper(self):
+            if self.loginStatus != True:
+                self.Infolist.addItem('please login system !!!')
+            else:
+                func(self)
+            self.Infolist.scrollToBottom()
+        return wrapper
 
     def quit(self):
         reply = QMessageBox.question(self, 'Message',
@@ -40,12 +50,15 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.No, QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-            # sys.exit()
+            if self.loginStatus == True:
+                self.logout()
             self.close()
         else:
             print("2333")
 
     def login(self):
+        if self.loginStatus == True:
+            self.logout()
         self.Filetree.clear()
         vhost = str(self.Host.text().strip())
         vport = int(str(self.Port.text().strip()) or '0')
@@ -83,44 +96,61 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
                 # self.Filetree.topLevelItem(0).child(1).setText(2, QtCore.QCoreApplication.translate("MainWindow", "a"))
                 # self.Filetree.topLevelItem(0).child(1).setText(3, QtCore.QCoreApplication.translate("MainWindow", "a"))
             else:
-                print(type(loginInfo),type(loginInfo[1]), loginInfo)
+                # print(type(loginInfo),type(loginInfo[1]), loginInfo)
                 self.Infolist.addItem(loginInfo[1])
                 # self.client.close()
         self.Infolist.scrollToBottom()
 
-
-    def logout(self, arg):
-        if self.loginStatus == True:
-            logoutInfo = self.client.logout()
-            if logoutInfo[0] == 0:
-                self.Infolist.addItem(logoutInfo[1])
-                self.Filetree.clear()
-            else:
-                self.Infolist.addItem(logoutInfo[1])
+    @auth
+    def logout(self):
+        logoutInfo = self.client.logout()
+        if logoutInfo[0] == 0:
+            self.Infolist.addItem(logoutInfo[1])
+            self.Filetree.clear()
+            self.loginStatus = False
         else:
-            self.Infolist.addItem('Not Login')
-        self.Infolist.scrollToBottom()
+            self.Infolist.addItem(logoutInfo[1])
 
-    def reconnect(self, arg):
+    def reconnect(self):
+        self.log.info('start reconnect')
         self.Filetree.clear()
+        if self.loginStatus == True:
+            self.logout()
         self.login()
         self.Infolist.scrollToBottom()
 
+    @auth
     def upload(self):
-        # filename = QFileDialog.getOpenFileName(self, 'Open file', '~')
-        # print('Path file :', filename)
 
-        upload_dialog = QtWidgets.QDialog()
-        upload_dialog.ui = Ui_UploadFileDialog()
-        upload_dialog.ui.setupUi(upload_dialog)
-        upload_dialog.exec_()
-        upload_dialog.show()
+        try:
+            retInfo = QFileDialog.getOpenFileName(self, 'Open upload file', '~')
+        except Exception as e:
+            raise
+
+        if retInfo[0]:
+            filename = retInfo[0]
+            self.log.info('prepare  file :{}'.format(filename))
+
+            uploadInfo = self.client.upload(filename)
+            if uploadInfo[0] == 1:
+                self.Infolist.addItem(uploadInfo[1])
+
+            # uploadProcess = Upload(filename, authToken)
+            # uploadProcess.start()
+            #
+            # upload_dialog = QtWidgets.QDialog()
+            # upload_dialog.ui = Ui_UploadFileDialog()
+            # upload_dialog.ui.setupUi(upload_dialog)
+            # upload_dialog.exec_()
+            # upload_dialog.show()
         # print(type(self.Filetree))
         # self.Filetree.topLevelItem(0).setText(0, QtCore.QCoreApplication.translate("MainWindow", "/"))
 
+    @auth
     def download(self):
         print('ok')
 
+    @auth
     def refresh(self):
         self.Filetree.clear()
 
@@ -141,6 +171,11 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
         self.Filetree.addTopLevelItem(fileList)
 
     def test(self):
+        upload_dialog = QtWidgets.QDialog()
+        upload_dialog.ui = Ui_UploadFileDialog()
+        upload_dialog.ui.setupUi(upload_dialog)
+        upload_dialog.exec_()
+        upload_dialog.show()
 
-        self.Infolist.addItem(str('abc'))
-        self.Infolist.addItem(str('123sdfadfadsdfadfadsfadfadfasdfadfadsfadfadfasfadfadfadsfadf'))
+        # self.Infolist.addItem(str('abc'))
+        # self.Infolist.addItem(str('123sdfadfadsdfadfadsfadfadfasdfadfadsfadfadfasfadfadfadsfadf'))

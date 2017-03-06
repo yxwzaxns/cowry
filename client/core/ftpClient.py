@@ -1,27 +1,26 @@
-from core.socketClient import SocketClient
-import logging
+from core.baseSocket import BaseSocket
+from core.syslog import Syslog
+from core.upload import Upload
+import hashlib, os
 
-class FTPClient(SocketClient):
+class FTPClient(BaseSocket):
     """docstring for FTPClient."""
     def __init__(self, **arg):
         super(FTPClient, self).__init__(**arg)
-        logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+        self.log = Syslog()
 
     def login(self):
-        logging.warning('start login')
+        self.log.info('start login')
         loginCmdCode = {'info': 'login', 'code': '1234', 'u': self.username, 'p': self.password}
-        try:
-            self.sendMsg(loginCmdCode)
-        except Exception as e:
-            logging.warning(str(e))
-            return (1, str(e))
+        loginInfo = self.sendMsg(loginCmdCode)
+        if loginInfo[0] == 1:
+            self.log.info(loginInfo[1])
+            return (1, loginInfo[1])
 
-        try:
-            self.recvMsg()
-        except Exception as e:
-            logging.warning(str(e))
-            return (1, str(e))
-
+        recvInfo = self.recvMsg()
+        if recvInfo[0] == 1:
+            self.log.info(recvInfo[1])
+            return (1, recvInfo[1])
 
         if self.recvInfo['status'] == '0':
             return (0, 'Login Successd')
@@ -29,28 +28,54 @@ class FTPClient(SocketClient):
             return (1, self.recvInfo['reason'])
 
     def logout(self):
+        self.log.info('start logout')
         logoutCmdCode = {'info': 'logout', 'code': ''}
-        try:
-            self.sendMsg(logoutCmdCode)
-        except Exception as e:
-            return (1,str(e))
-        try:
-            self.recvMsg()
-        except Exception as e:
-            logging.warning(str(e))
-            return (1, str(e))
+        logoutInfo = self.sendMsg(logoutCmdCode)
+        if logoutInfo[0] == 1:
+            return (1,logoutInfo[1])
+
+        recvInfo = self.recvMsg()
+        if recvInfo[0] == 1:
+            return (1, recvInfo[1])
 
         if self.recvInfo['status'] == '0':
             return (0, 'Logout Successd')
         else:
             return (1, self.recvInfo['reason'])
 
-    def reconnect(self, arg):
+    def reconnect(self):
         self.logout()
-        self.login()
 
-    def upload(self, arg):
-        pass
+    def upload(self, filepath):
+        filename = os.path.basename(filepath)
+        try:
+            with open(filepath, 'rb') as f:
+                fileHashCode = hashlib.md5(f.read()).hexdigest()
+        except Exception as e:
+            return (1, str(e))
+
+        self.log.info('upload file md5 is :{}'.format(fileHashCode))
+        uploadCmdCode = {'info': "upload", "code": "", "filename": filename, "hash": fileHashCode }
+
+        uploadInfo = self.sendMsg(uploadCmdCode)
+        if uploadInfo[0] == 1:
+            sys.log.info(uploadInfo[1])
+        else:
+            retInfo = self.recvMsg()
+            if retInfo[0] == 1:
+                return (1, recvInfo[1])
+            elif self.recvInfo['status'] == '0':
+                uploadAuthCode = self.recvInfo['token']
+                remoteDataInfo = self.recvInfo['dataAddress']
+                self.log.info('recv upload auth token is : {}'.format(uploadAuthCode))
+                self.log.info('remote open data info : {}:{}'.format(remoteDataInfo[0],remoteDataInfo[1]))
+
+                uploadProcess = Upload(remoteDataInfo, filepath, uploadAuthCode)
+                uploadProcess.start()
+                return (0, 'ok')
+            else:
+                return (1, self.recvInfo['reason'])
+        # uploadProcess = Upload()
 
     def download(self, filename):
         downloadCmdCode = {'info': 'download', 'code': '', 'filename': filename}
@@ -69,7 +94,7 @@ class FTPClient(SocketClient):
         try:
             self.recvMsg()
         except Exception as e:
-            logging.warning(str(e))
+            self.log.info(str(e))
             return (1, str(e))
         else:
             return (0, self.recvInfo['list'])

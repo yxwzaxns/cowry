@@ -16,6 +16,7 @@ class Server(Db):
             self.__dict__.update(arg)
         self.init_db()
         self.init_status()
+        self.init_ssl()
         self.init_socket()
 
 
@@ -33,11 +34,12 @@ class Server(Db):
     def init_db(self):
         self.initDB()
 
+    def init_ssl(self):
+        self.sslContext = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        self.sslContext.load_cert_chain(certfile="./certs/server.crt", keyfile="./certs/server.key")
+
     def init_socket(self):
         print('start init server socket')
-        self.sslContext = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-
-        self.sslContext.load_cert_chain(certfile="./certs/server.crt", keyfile="./certs/server.key")
         # create an INET, STREAMing socket
         self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -56,6 +58,6 @@ class Server(Db):
 
     def createWorker(self, clientSocket, address):
         # workerId = hashlib.md5(str(address).encode('utf8')).hexdigest()
-        worker = Worker(clientSocket, address, self.Session)
+        worker = Worker(clientSocket, address, self.Session, sslContext = self.sslContext)
         worker.start()
         self.workers.append(worker)

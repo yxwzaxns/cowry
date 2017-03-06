@@ -8,5 +8,7 @@
       "db_user" : "root",
       "db_password" : "1234"
     }
-  }
+  },
+  "datapath" : "/Users/ruby/workspace/git/cowry/server/data",
+  "debug": "True"
 }

@@ -161,6 +161,11 @@ class Ui_MainWindow(object):
         icon2.addPixmap(QtGui.QPixmap(":/Documents/tmp/icons/list.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.Setlist.setIcon(icon2)
         self.Setlist.setObjectName("Setlist")
+        self.Download_2 = QtWidgets.QAction(MainWindow)
+        icon3 = QtGui.QIcon()
+        icon3.addPixmap(QtGui.QPixmap(":/Documents/tmp/icons/download.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.Download_2.setIcon(icon3)
+        self.Download_2.setObjectName("Download_2")
         self.menufile.addAction(self.Setdefaultinfo)
         self.menufile.addSeparator()
         self.menufile.addAction(self.actionabout)
@@ -172,6 +177,7 @@ class Ui_MainWindow(object):
         self.mainToolBar.addAction(self.actionabout)
         self.mainToolBar.addAction(self.Setdefaultinfo)
         self.mainToolBar.addAction(self.Setlist)
+        self.mainToolBar.addAction(self.Download_2)
 
         self.retranslateUi(MainWindow)
         self.Login.clicked.connect(MainWindow.login)
@@ -226,5 +232,6 @@ class Ui_MainWindow(object):
         self.actionabout.setText(_translate("MainWindow", "about"))
         self.actiontest.setText(_translate("MainWindow", "test"))
         self.Setlist.setText(_translate("MainWindow", "setlist"))
+        self.Download_2.setText(_translate("MainWindow", "download"))
 
 import resources_rc

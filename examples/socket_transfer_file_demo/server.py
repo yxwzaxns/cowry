@@ -15,10 +15,11 @@ serverSocket.listen(5)
 (clientSocket, clientAddress) = serverSocket.accept()
 
 print(clientAddress)
+print('prepare to recv file...')
 
-# while True:
-recvInfo = clientSocket.recv(1024)
-print('recvInfo is : ', recvInfo.decode('utf-8'))
-clientSocket.send(recvInfo)
-clientSocket.shutdown(socket.SHUT_RDWR)
-clientSocket.close()
+with open('to_recv_file/temp.jpg', 'wb') as f:
+    recvfile = clientSocket.recv(1024)
+    while recvfile:
+        f.write(recvfile)
+        recvfile = clientSocket.recv(1024)
+print('recv end')

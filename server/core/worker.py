@@ -2,15 +2,17 @@ import threading
 import time
 from core.baseSocket import BaseSocket
 from core.database import Db
+from core.upload import Upload
 from db.schema import *
-import hashlib
+import hashlib, uuid, os
 
 
 class Worker(threading.Thread, BaseSocket):
     """docstring for Worker."""
-    def __init__(self, client, address, db_session):
+    def __init__(self, client, address, db_session, sslContext= None):
         BaseSocket.__init__(self, client, address)
         threading.Thread.__init__(self)
+        self.sslContext = sslContext
         self.authenticated = False
         self.session = db_session()
         self.user = user.User
@@ -23,17 +25,17 @@ class Worker(threading.Thread, BaseSocket):
             recvInfo = self.recvMsg()
             if recvInfo[0] == 1:
                 print("can't recvMsg :", recvInfo[1])
-                exit()
+                self.exit()
             elif self.recvInfo:
                 print('Received cmd code', self.recvInfo)
+                cmd = self.recvInfo['info']
                 try:
-                    cmd = self.recvInfo['info']
                     func = getattr(self, cmd)
                     func()
                 except AttributeError as err:
                     print('Receive', err)
             else:
-                exit()
+                self.exit()
 
     def auth(func):
         def wrapper(self):
@@ -48,8 +50,28 @@ class Worker(threading.Thread, BaseSocket):
         pass
 
     @auth
-    def recvFile(self):
-        pass
+    def upload(self):
+        uploadFileHashCode = self.recvInfo['hash']
+        uploadFileName, postfix = os.path.splitext(self.recvInfo['filename'])
+        currentTime = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+        try:
+            self.session.add(self.file(uid= self.userid, name= uploadFileName, hashcode= uploadFileHashCode,updatetime= currentTime, postfix= postfix))
+        except Exception as e:
+            raise
+
+        retInfo = self.createDataSock() #return (int, tuple(ip,port))
+        if retInfo[0] == 1:
+            self.log.info('createDataSock fails: {}'.format(retInfo[1]))
+
+        authToken = uuid.uuid4().hex.upper()
+        remsg = {'info': 'upload', 'code': self.recvInfo['code'], 'status': '0', 'token': authToken, 'dataAddress': retInfo[1]}
+        retInfo = self.sendMsg(remsg)
+        if retInfo[0] == 1:
+            self.log.info('sendMsg fails: {}'.format(retInfo[1]))
+        else:
+            uploadProcess = Upload(self.sslContext, self.dataSocket, uploadFileHashCode, authToken)
+            uploadProcess.start()
+        # self.session.commit()
 
     @auth
     def list(self):
@@ -80,7 +102,15 @@ class Worker(threading.Thread, BaseSocket):
             self.sendMsg(remsg)
     @auth
     def logout(self):
-        pass
+        logoutInfo = {"info": "logout", "code": self.recvInfo['code'], 'status': '0'}
+        self.sendMsg(logoutInfo)
+        self.close()
+        self.exit()
+
+    def exit(self):
+        self.session.close()
+        self.close()
+        exit()
 
 
 if __name__ == '__main__':
