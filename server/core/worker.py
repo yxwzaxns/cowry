@@ -53,9 +53,10 @@ class Worker(threading.Thread, BaseSocket):
     def upload(self):
         uploadFileHashCode = self.recvInfo['hash']
         uploadFileName, postfix = os.path.splitext(self.recvInfo['filename'])
+        uploadFileSize = self.recvInfo['filesize']
         currentTime = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
         try:
-            self.session.add(self.file(uid= self.userid, name= uploadFileName, hashcode= uploadFileHashCode,updatetime= currentTime, postfix= postfix))
+            self.session.add(self.file(uid= self.userid, name= uploadFileName, size= uploadFileSize, hashcode= uploadFileHashCode,updatetime= currentTime, postfix= postfix))
         except Exception as e:
             raise
 
@@ -69,9 +70,15 @@ class Worker(threading.Thread, BaseSocket):
         if retInfo[0] == 1:
             self.log.info('sendMsg fails: {}'.format(retInfo[1]))
         else:
-            uploadProcess = Upload(self.sslContext, self.dataSocket, uploadFileHashCode, authToken)
+            uploadProcess = Upload(self.sslContext, self.dataSocket, uploadFileHashCode, uploadFileSize, authToken)
             uploadProcess.start()
-        # self.session.commit()
+
+    @auth
+    def uploadComfirm(self):
+        if self.recvInfo['status'] == '0':
+            self.session.commit()
+        else:
+            self.session.rollback()
 
     @auth
     def list(self):

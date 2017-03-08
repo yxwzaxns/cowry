@@ -1,4 +1,4 @@
-import socket
+import socket, os
 
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -15,11 +15,21 @@ serverSocket.listen(5)
 (clientSocket, clientAddress) = serverSocket.accept()
 
 print(clientAddress)
+fileSize = int(clientSocket.recv(1024).strip())
+print('recv file size {}'.format(fileSize))
 print('prepare to recv file...')
 
+loop = fileSize // 1024
+extend = fileSize % 1024
 with open('to_recv_file/temp.jpg', 'wb') as f:
-    recvfile = clientSocket.recv(1024)
-    while recvfile:
-        f.write(recvfile)
+    for i in range(loop):
         recvfile = clientSocket.recv(1024)
-print('recv end')
+        f.write(recvfile)
+        clientSocket.send(b'1')
+    recvfile = clientSocket.recv(extend)
+    f.write(recvfile)
+if os.path.getsize('to_recv_file/temp.jpg') == fileSize:
+    clientSocket.send(b'0')
+else:
+    clientSocket.send(b'2')
+print("recv end")

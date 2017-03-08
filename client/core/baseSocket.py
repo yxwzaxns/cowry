@@ -64,13 +64,13 @@ class BaseSocket(object):
     def sendFile(self):
         with open(self.filepath, 'rb') as f:
             try:
-                self.ctrlSock.sendfile(f)
+                sendSize = self.ctrlSock.sendfile(f)
             except Exception as e:
                 self.log.info('send file fails : {}'.format(str(e)))
             else:
                 self.log.info('send file Successd')
-            # finally:
-            #     self.close()
+            finally:
+                self.log.info('total send size is :{:.2f} M'.format(sendSize / 1024))
 
     def checkCmdCode(func):
         def wrapper(self):
@@ -121,6 +121,15 @@ class BaseSocket(object):
             self.log.info('recv info {}'.format(recvInfo.strip()))
             return (0, "ok")
 
+    def recvMark(self):
+        try:
+            recvInfo = self.ctrlSock.recv(1).strip()
+        except Exception as e:
+            self.log.info(' recv upload file transfer mark error : {}'.format(str(e)))
+        else:
+            # self.recvInfo = literal_eval(recvInfo.decode('utf8'))
+            # self.log.info('recv info {}'.format(recvInfo.strip()))
+            return recvInfo
     def logout(self):
         pass
 

@@ -17,7 +17,7 @@ class Db(object):
         # except Exception as e:
         #     print(Exception,':', e)
         # else:
-        self.engine = create_engine('mysql+pymysql://root:1234@127.0.0.1:3306/cowry', encoding='utf-8', pool_recycle=3600)
+        self.engine = create_engine('mysql+pymysql://root:1234@127.0.0.1:3306/cowry?charset=utf8', encoding='utf-8', pool_recycle=3600)
         self.Session = sessionmaker(bind = self.engine)
         # self.session = self.Session()
 

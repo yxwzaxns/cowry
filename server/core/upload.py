@@ -5,14 +5,16 @@ from ast import literal_eval
 
 class Upload(threading.Thread):
     """docstring for Upload."""
-    def __init__(self, sslContext, dataSock, fileHashCode, authtoken):
+    def __init__(self, sslContext, dataSock, fileHashCode, filesize, authtoken):
         super(Upload, self).__init__()
         self.log = Syslog()
         self.fileHashCode = fileHashCode
+        self.filesize = filesize
         self.authtoken = authtoken
         self.sslContext = sslContext
         self.dataSock = dataSock
         self.settings = Settings()
+        self.uploadFilePath = os.path.join(self.settings.datapath, self.fileHashCode)
 
     def run(self):
         self.clientSocket, self.clientAddress = self.dataSock.accept()
@@ -41,16 +43,15 @@ class Upload(threading.Thread):
                 self.log.info(retInfo[1])
                 self.close()
             else:
-                retInfo = self.recvFile()
+                retInfo = self.recvFile(self.filesize)
                 if retInfo[0] == 0:
                     self.checkFileIfUpload()
                 else:
                     self.log.info(retInfo[1])
 
     def checkFileIfUpload(self):
-        filepath = os.path.join(self.settings.datapath, self.fileHashCode)
         try:
-            with open(filepath, 'rb') as f:
+            with open(self.uploadFilePath, 'rb') as f:
                 fileHashCode = hashlib.md5(f.read()).hexdigest()
                 self.log.info('upload file md5 is :{}'.format(fileHashCode))
         except Exception as e:
@@ -77,21 +78,30 @@ class Upload(threading.Thread):
         else:
             return (0, 'ok')
 
-    def recvFile(self):
+    def recvFile(self, filesize):
         self.log.info('######## start recv file ########')
-        with open(os.path.join(self.settings.datapath, self.fileHashCode), 'wb') as f:
-            try:
-                fileData = self.sslDataSock.recv(1024)
-                while fileData:
-                    f.write(fileData)
-                    fileData = self.sslDataSock.recv(1024)
-            except Exception as e:
-                self.log.info("can't write data to file : {}".format(str(e)))
-                ret =  (1, str(e))
-            else:
-                self.log.info('recv file end')
-                ret = (0, 'ok')
-        return ret
+        loop = filesize // 1024
+        extend = filesize % 1024
+        with open(self.uploadFilePath, 'wb') as f:
+            recvedFileSize = 0
+            for i in range(loop):
+                recvfile = self.sslDataSock.recv(1024)
+                # self.log.info('receving data of file is : {:.2f}%'.format(recvedFileSize / filesize * 100))
+                f.write(recvfile)
+                self.log.info('start recv {} loop'.format(i))
+                self.log.info('this task need to loop {}, the last info size of info is : {}'.format(loop, extend))
+
+                recvedFileSize += len(recvfile)
+                self.sslDataSock.send(b'1') # receiving file
+            recvfile = self.sslDataSock.recv(extend)
+            f.write(recvfile)
+        if os.path.getsize(self.uploadFilePath) == filesize:
+            self.sslDataSock.send(b'0') # recv finished
+            self.log.info('upload finished')
+            return (0, 'ok')
+        else:
+            self.sslDataSock.send(b'2') # size not match
+            return (1, 'size not match')
 
     def recvMsg(self):
         try:

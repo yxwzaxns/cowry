@@ -46,8 +46,9 @@ class FTPClient(BaseSocket):
     def reconnect(self):
         self.logout()
 
-    def upload(self, filepath):
+    def upload(self, filepath, pbar):
         filename = os.path.basename(filepath)
+        filesize = os.path.getsize(filepath)
         try:
             with open(filepath, 'rb') as f:
                 fileHashCode = hashlib.md5(f.read()).hexdigest()
@@ -55,8 +56,7 @@ class FTPClient(BaseSocket):
             return (1, str(e))
 
         self.log.info('upload file md5 is :{}'.format(fileHashCode))
-        uploadCmdCode = {'info': "upload", "code": "", "filename": filename, "hash": fileHashCode }
-
+        uploadCmdCode = {'info': "upload", "code": "", "filename": filename, "filesize": filesize, "hash": fileHashCode }
         uploadInfo = self.sendMsg(uploadCmdCode)
         if uploadInfo[0] == 1:
             sys.log.info(uploadInfo[1])
@@ -70,12 +70,17 @@ class FTPClient(BaseSocket):
                 self.log.info('recv upload auth token is : {}'.format(uploadAuthCode))
                 self.log.info('remote open data info : {}:{}'.format(remoteDataInfo[0],remoteDataInfo[1]))
 
-                uploadProcess = Upload(remoteDataInfo, filepath, uploadAuthCode)
+                uploadProcess = Upload(remoteDataInfo, filepath, uploadAuthCode, pbar)
                 uploadProcess.start()
+                
                 return (0, 'ok')
             else:
                 return (1, self.recvInfo['reason'])
         # uploadProcess = Upload()
+
+    def uploadComfirm(self):
+        uploadComfirmCmdCode = {'info': 'uploadComfirm', 'code': '', 'status': '0'}
+        self.sendMsg(uploadComfirmCmdCode)
 
     def download(self, filename):
         downloadCmdCode = {'info': 'download', 'code': '', 'filename': filename}

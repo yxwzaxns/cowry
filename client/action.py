@@ -1,10 +1,10 @@
-import sys, time
+import sys, time, os
 from PyQt5.QtWidgets import QMainWindow, QMessageBox,QFileDialog,QProgressBar,QWidget
 from PyQt5 import QtWidgets
 from core.ftpClient import FTPClient
 from mainwindow import Ui_MainWindow
-from upload import Ui_UploadFileDialog
 from core.upload import Upload
+from upload import Ui_UploadFileDialog
 from core.syslog import Syslog
 
 class Action_MainWindow(QMainWindow, Ui_MainWindow):
@@ -131,20 +131,37 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
             filename = retInfo[0]
             self.log.info('prepare  file :{}'.format(filename))
 
-            uploadInfo = self.client.upload(filename)
-            if uploadInfo[0] == 1:
-                self.Infolist.addItem(uploadInfo[1])
+            self.upload_dialog = QtWidgets.QDialog()
+            self.upload_dialog.ui = Ui_UploadFileDialog()
+            self.upload_dialog.comfirm = self.uploadComfirm
+            self.upload_dialog.ui.setupUi(self.upload_dialog)
+            self.upload_dialog.ui.Filename.setText(os.path.basename(filename))
+            self.step = 1
 
-            # uploadProcess = Upload(filename, authToken)
-            # uploadProcess.start()
-            #
-            # upload_dialog = QtWidgets.QDialog()
-            # upload_dialog.ui = Ui_UploadFileDialog()
-            # upload_dialog.ui.setupUi(upload_dialog)
-            # upload_dialog.exec_()
-            # upload_dialog.show()
+            uploadInfo = self.client.upload(filename, self.upload_dialog)
+            
+            self.upload_dialog.ui.UploadProgress.setValue(0)
+            self.upload_dialog.show()
+            self.upload_dialog.exec_()
+
+
+            # if uploadInfo[0] == 1:
+            #     self.Infolist.addItem(uploadInfo[1])
+
+
+
+
+                # self.btn = QPushButton('Start', self)
+                # self.btn.move(40, 80)
+                # self.btn.clicked.connect(self.change)
+                # self.pbar.show()
         # print(type(self.Filetree))
         # self.Filetree.topLevelItem(0).setText(0, QtCore.QCoreApplication.translate("MainWindow", "/"))
+
+    def uploadComfirm(self):
+        self.client.uploadComfirm()
+        self.Infolist.addItem('file upload successd')
+        self.upload_dialog.close()
 
     @auth
     def download(self):
@@ -163,16 +180,20 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
         self.Password.setText('1234')
 
     def setlist(self):
-        fileList = QtWidgets.QTreeWidgetItem([" /"])
-        # if listInfo[1] and type(listInfo[1]) is list:
-        #     for file in fileList[1]:
-        fileItem = QtWidgets.QTreeWidgetItem(['1','2','3','4'])
-        fileList.addChild(fileItem)
-        self.Filetree.addTopLevelItem(fileList)
+        self.step += 1
+        # fileList = QtWidgets.QTreeWidgetItem([" /"])
+        # # if listInfo[1] and type(listInfo[1]) is list:
+        # #     for file in fileList[1]:
+        # fileItem = QtWidgets.QTreeWidgetItem(['1','2','3','4'])
+        # fileList.addChild(fileItem)
+        # self.Filetree.addTopLevelItem(fileList)
+        # self.upload_dialog.UploadProgress.setValue(50)
+        self.upload_dialog.ui.UploadProgress.setValue(self.step)
 
     def test(self):
         upload_dialog = QtWidgets.QDialog()
         upload_dialog.ui = Ui_UploadFileDialog()
+        upload_dialog.comfirm = self.uploadComfirm
         upload_dialog.ui.setupUi(upload_dialog)
         upload_dialog.exec_()
         upload_dialog.show()
