@@ -6,4 +6,4 @@ dist
 build
 *.egg
 *.egg-info
-data/
+data/*
