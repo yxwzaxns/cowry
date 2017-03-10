@@ -1,16 +1,23 @@
+from PyQt5.QtCore import pyqtSignal, QObject
 import threading, _thread, os
 from core.baseSocket import BaseSocket
 from PyQt5 import QtWidgets
 
+class UploadSignal(QObject):
+    # def __init__(self):
+    #     super(UploadSignal, self).__init__()
+    p = pyqtSignal(tuple)
+
 class Upload(threading.Thread, BaseSocket):
     """docstring for Upload."""
-    def __init__(self, remote, filepath, authtoken, upload_dialog):
+    def __init__(self, remote, filepath, authtoken):
         BaseSocket.__init__(self, host = remote[0], port = remote[1])
         threading.Thread.__init__(self)
+        # UploadSignal.__init__(self)
+        self.signal = UploadSignal()
         self.filepath = filepath
         self.filename = os.path.basename(self.filepath)
         self.authtoken = authtoken
-        self.upload_dialog = upload_dialog
         self.step = 0
 
     def run(self):
@@ -50,8 +57,8 @@ class Upload(threading.Thread, BaseSocket):
             if info == b'0' or len(info) == 0:
                 # start deal with upload progress bar
                 self.log.info('recv mark end')
-                self.upload_dialog.ui.UploadProgress.setValue(100)
-                self.upload_dialog.ui.Percentage_label.setText('100%')
+                self.callProgressGui((100, '100%'))
+                # self.upload_dialog.ui.Percentage_label.setText('100%')
                 break
             elif info == b'2':
                 self.log.info('size of upload file is not same with local file ')
@@ -62,6 +69,10 @@ class Upload(threading.Thread, BaseSocket):
                 p = int(count * 1024 / filesize * 100)
                 if p >= 99:
                     p = 100
-                self.upload_dialog.ui.UploadProgress.setValue(p)
-                self.upload_dialog.ui.Percentage_label.setText("{}%".format(p))
+                # self.upload_dialog.ui.UploadProgress.setValue(p)
+                # self.upload_dialog.ui.Percentage_label.setText("{}%".format(p))
+                self.callProgressGui((p, "{}%".format(p)))
             info = self.recvMark()
+
+    def callProgressGui(self, progress):
+        self.signal.p.emit(progress)

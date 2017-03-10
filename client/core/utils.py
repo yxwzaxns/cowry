@@ -1,13 +1,6 @@
-# def checkCmdCode(func):
-#     def wrapper(msg):
-#         self.lastCmdCode = ''
-#         ret = func(msg)
-#         recvInfo = literal_eval(ret.decode('utf8'))
-#         if recvInfo['code'] == self.lastCmdCode:
-#             print('ok')
-#         else:
-#             print('lastCmdCode is not same')
-#     return wrapper
-# @staticmethod
-def uploadComfirm():
-    print("ok 2333")
+def prettySize(num, suffix='B'):
+    num = int(num)
+    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+        if abs(num) < 1024.0:
+            return "{:.3f} {}{}".format(num, unit, suffix)
+        num /= 1024.0

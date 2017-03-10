@@ -7,14 +7,15 @@ from core.syslog import Syslog
 
 class BaseSocket(object):
     """docstring for Client."""
-    def __init__(self, clientSocket, clientAddress):
+    def __init__(self, **arg):
         super(BaseSocket, self).__init__()
-        self.clientSocket = clientSocket
-        self.clientAddress = clientAddress
+        # self.clientSocket = clientSocket
+        # self.clientAddress = clientAddress
         self.log = Syslog()
 
         self.SEND_BUFFER_SIZE = 1024
 
+        self.__dict__.update(arg)
 
     msgCode = ('login','logout','refresh','list','get','put')
 
@@ -38,6 +39,17 @@ class BaseSocket(object):
         else:
             return (0, "ok")
 
+    def sendFile(self):
+        with open(self.downloadFilePath, 'rb') as f:
+            try:
+                sendSize = self.clientSocket.sendfile(f)
+            except Exception as e:
+                self.log.info('send file fails : {}'.format(str(e)))
+            else:
+                self.log.info('send file Successd')
+            finally:
+                self.log.info('total send size is :{:.2f} M'.format(sendSize / 1024))
+
     def recvMsg(self):
         try:
             info_tmp = self.clientSocket.recv(1024)
@@ -58,6 +70,11 @@ class BaseSocket(object):
         print("worker subprocess end")
         self.clientSocket.shutdown(socket.SHUT_RDWR)
         self.clientSocket.close()
+
+
+    def createSslSock(self):
+        self.clientSock, self.clientAddress = self.dataSock.accept()
+        self.clientSocket = self.sslContext.wrap_socket(self.clientSock, server_side=True)
 
     def createDataSock(self):
         self.log.info('start create data  socket')

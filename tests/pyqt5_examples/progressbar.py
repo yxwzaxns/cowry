@@ -1,13 +1,14 @@
 import sys,time
 from PyQt5.QtWidgets import (QWidget, QProgressBar,
     QPushButton, QApplication)
-from PyQt5.QtCore import QBasicTimer
+from PyQt5.QtCore import QBasicTimer, pyqtSignal
 
-class Example(QWidget):
+class Down(QWidget):
     def __init__(self):
         super().__init__()
 
         self.initUI()
+        self.f = pyqtSignal()
 
     def initUI(self):
         self.pbar = QProgressBar(self)
@@ -18,12 +19,15 @@ class Example(QWidget):
         self.btn = QPushButton('Start', self)
         self.btn.move(40, 80)
         self.btn.clicked.connect(self.change)
-        self.step = 1
+        self.step = 0
 
         self.show()
     def change(self):
         self.pbar.setValue(self.step)
-        self.step += 1
+        self.step += 5
+        if self.step == 100:
+            self.f.emit()
+
 
 
 

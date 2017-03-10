@@ -1,16 +1,32 @@
-class Example1(object):
+class A(object):
+    """docstring for A."""
+    def __init__(self):
+        super(A, self).__init__()
+
+    def call(self):
+        print("A")
+    def calla(self):
+        print('calla')
+
+class B(object):
+    """docstring for B."""
+    def __init__(self):
+        super(B, self).__init__()
+    def call(self):
+        print("B")
+
+    def callb(self):
+        print('callb')
+
+class Example1(A, B):
     """docstring for Example."""
     def __init__(self):
         super(Example1, self).__init__()
-
-    def call(self):
-        print(self.name)
-
-class Example2(Example1):
-    """docstring for Example2."""
-    def __init__(self):
-        super(Example2, self).__init__()
-        self.name = 'a'
         self.call()
+        self.callb()
 
-app = Example2()
+    def p(self):
+        print(self.__mro__)
+
+app = Example1()
+app.p()

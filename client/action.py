@@ -1,11 +1,13 @@
 import sys, time, os
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, QMessageBox,QFileDialog,QProgressBar,QWidget
 from PyQt5 import QtWidgets
 from core.ftpClient import FTPClient
 from mainwindow import Ui_MainWindow
-from core.upload import Upload
 from upload import Ui_UploadFileDialog
+from download import Ui_DownloadFileDialog
 from core.syslog import Syslog
+from core.utils import *
 
 class Action_MainWindow(QMainWindow, Ui_MainWindow):
     """docstring for Action_MainWindow."""
@@ -71,22 +73,26 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
                 self.client = FTPClient(host = vhost, port = vport, username = vusername, password = vpassword)
             except Exception as e:
                 raise
+            self.client.signal.refresh.connect(self.refresh)
             loginInfo = self.client.login()
             if loginInfo[0] == 0:
                 self.Infolist.addItem(str(loginInfo[1]))
                 self.loginStatus = True
-                listInfo = self.client.list()
+                self.refresh()
+
                 # start files list
                 # fileList = self.client.list('/')
-                if listInfo[0] == 0:
-                    fileList = QtWidgets.QTreeWidgetItem([" /"])
-                    if listInfo[1] and type(listInfo[1]) is list:
-                        for file in listInfo[1]:
-                            fileItem = QtWidgets.QTreeWidgetItem([file['name'], file['postfix'], file['size'], file['updatetime']])
-                            fileList.addChild(fileItem)
-                    self.Filetree.addTopLevelItem(fileList)
-                else:
-                    self.Infolist.addItem(str(listInfo[1]))
+                # if listInfo[0] == 0:
+                #     fileList = QtWidgets.QTreeWidgetItem([" /"])
+                #     if listInfo[1] and type(listInfo[1]) is list:
+                #         for file in listInfo[1]:
+                #             fileItem = QtWidgets.QTreeWidgetItem([file['name'], file['postfix'], file['size'], file['updatetime']])
+                #             fileList.addChild(fileItem)
+                #     self.Filetree.addTopLevelItem(fileList)
+                #     # print(QtWidgets.QTreeWidgetItem.indexOfChild(fileList))
+                #     self.Filetree.expandToDepth(0)
+                # else:
+                #     self.Infolist.addItem(str(listInfo[1]))
 
 
                 # self.fileList.addItem(self.client.certInfo)
@@ -123,33 +129,29 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
     def upload(self):
 
         try:
-            retInfo = QFileDialog.getOpenFileName(self, 'Open upload file', '~')
+            retInfo = QFileDialog.getOpenFileName(self, 'Open upload file', os.path.expanduser('~'))
         except Exception as e:
             raise
 
         if retInfo[0]:
-            filename = retInfo[0]
-            self.log.info('prepare  file :{}'.format(filename))
+            filepath = retInfo[0]
+            filename = os.path.basename(filepath)
+            self.log.info('prepare  file :{}'.format(filepath))
 
             self.upload_dialog = QtWidgets.QDialog()
             self.upload_dialog.ui = Ui_UploadFileDialog()
-            self.upload_dialog.comfirm = self.uploadComfirm
+            self.upload_dialog.comfirm = self.client.uploadComfirm
             self.upload_dialog.ui.setupUi(self.upload_dialog)
-            self.upload_dialog.ui.Filename.setText(os.path.basename(filename))
-            self.step = 1
-
-            uploadInfo = self.client.upload(filename, self.upload_dialog)
-            
-            self.upload_dialog.ui.UploadProgress.setValue(0)
+            self.upload_dialog.ui.Filename.setText(filename)
+            self.upload_dialog.ui.Progress.setValue(0)
             self.upload_dialog.show()
-            self.upload_dialog.exec_()
 
-
-            # if uploadInfo[0] == 1:
-            #     self.Infolist.addItem(uploadInfo[1])
-
-
-
+            retInfo = self.client.upload(filepath, self.upload_dialog)
+            if retInfo[0] == 0:
+                self.Infolist.addItem('file upload successd')
+            else:
+                self.Infolist.addItem(retInfo[1])
+            # self.upload_dialog.close()
 
                 # self.btn = QPushButton('Start', self)
                 # self.btn.move(40, 80)
@@ -158,20 +160,64 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
         # print(type(self.Filetree))
         # self.Filetree.topLevelItem(0).setText(0, QtCore.QCoreApplication.translate("MainWindow", "/"))
 
-    def uploadComfirm(self):
-        self.client.uploadComfirm()
-        self.Infolist.addItem('file upload successd')
-        self.upload_dialog.close()
-
     @auth
     def download(self):
-        print('ok')
+        selectFiles = self.Filetree.selectedItems()
+        if not selectFiles:
+            self.Infolist.addItem('Please select file')
+        else:
+            filesInfo = ('filename', 'profix', 'size', 'uploadtime')
+            # self.log.info('selected file is : {}'.format(selectFiles)
+            # self.log.info('index : {}'.format(self.Filetree.selectedIndexes()))
+            downloadFileInfo = {}
+            for i in range(4):
+                downloadFileInfo[filesInfo[i]] = selectFiles[0].text(i)
+            downloadFileName = str().join((downloadFileInfo['filename'], downloadFileInfo['profix']))
+            try:
+                retInfo = QFileDialog.getSaveFileName(self, 'Save download file', downloadFileName)
+            except Exception as e:
+                raise
+            if retInfo[0]:
+                downloadFilePath = retInfo[0]
+            #     # filename = os.path.basename(filepath)
+                self.log.info('start draw download progress GUI')
+                self.download_dialog = QtWidgets.QDialog()
+                self.download_dialog.ui = Ui_DownloadFileDialog()
+                self.download_dialog.comfirm = self.client.downloadComfirm
+                self.download_dialog.ui.setupUi(self.download_dialog)
+                self.download_dialog.ui.Filename.setText(downloadFileName)
+                self.download_dialog.ui.Progress.setValue(0)
+                self.download_dialog.show()
+
+                retInfo = self.client.download(downloadFileInfo, downloadFilePath, self.download_dialog)
+                if retInfo[0] == 0:
+                    self.Infolist.addItem('file download successd')
+                else:
+                    self.Infolist.addItem(retInfo[1])
 
     @auth
     def refresh(self):
         self.Filetree.clear()
+        listInfo = self.client.list()
+        # start files list
+        # fileList = self.client.list('/')
+        if listInfo[0] == 0:
+            fileList = QtWidgets.QTreeWidgetItem([" /"])
+            if listInfo[1] and type(listInfo[1]) is list:
+                for file in listInfo[1]:
+                    fileItem = QtWidgets.QTreeWidgetItem([file['name'], file['postfix'][1:], prettySize(file['size']), file['updatetime']])
+                    fileList.addChild(fileItem)
+            self.Filetree.addTopLevelItem(fileList)
+            self.Filetree.expandToDepth(0)
+            self.Infolist.addItem("Refresh Completed")
+        else:
+            self.Infolist.addItem(str(listInfo[1]))
 
-        print('ok')
+
+    def keyPressEvent(self, e):
+
+        if e.key() == Qt.Key_Escape:
+            self.close()
 
     def setdefaultinfo(self):
         self.Host.setText('127.0.0.1')
@@ -191,12 +237,9 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
         self.upload_dialog.ui.UploadProgress.setValue(self.step)
 
     def test(self):
-        upload_dialog = QtWidgets.QDialog()
-        upload_dialog.ui = Ui_UploadFileDialog()
-        upload_dialog.comfirm = self.uploadComfirm
-        upload_dialog.ui.setupUi(upload_dialog)
-        upload_dialog.exec_()
-        upload_dialog.show()
+        # a=self.Filetree.headerItem()
+        # print(a.text(0))
+        pass
 
         # self.Infolist.addItem(str('abc'))
         # self.Infolist.addItem(str('123sdfadfadsdfadfadsfadfadfasdfadfadsfadfadfasfadfadfadsfadf'))

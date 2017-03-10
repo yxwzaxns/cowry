@@ -1,4 +1,4 @@
-import socket, ssl
+import socket, ssl, os
 import json, random, logging
 from ast import literal_eval
 from config import settings
@@ -58,8 +58,7 @@ class BaseSocket(object):
         self.sslContext.load_verify_locations(self.settings['certificates']['PublicKey'])
 
     def createDataSock(self):
-        pass
-
+        self.dataSock = self.ctrlSock
 
     def sendFile(self):
         with open(self.filepath, 'rb') as f:
@@ -71,6 +70,35 @@ class BaseSocket(object):
                 self.log.info('send file Successd')
             finally:
                 self.log.info('total send size is :{:.2f} M'.format(sendSize / 1024))
+
+    def recvFile(self):
+        self.log.info('######## start recv file ########')
+        loop = int(self.downloadFileInfo['size']) // 1024
+        extend = int(self.downloadFileInfo['size']) % 1024
+        with open(self.saveFilePath, 'wb') as f:
+            recvedFileSize = 0
+            for i in range(loop):
+                recvfile = self.dataSock.recv(1024)
+                # self.log.info('receving data of file is : {:.2f}%'.format(recvedFileSize / filesize * 100))
+                f.write(recvfile)
+                self.log.info('start recv {} loop'.format(i))
+                self.log.info('this task need to loop {}, the last info size of info is : {}'.format(loop, extend))
+                self.signal.recv.emit(1)
+                self.log.info('emit 1')
+
+                recvedFileSize += len(recvfile)
+                # self.dataSock.send(b'1') # receiving file
+            recvfile = self.dataSock.recv(extend)
+            f.write(recvfile)
+            self.signal.recv.emit(0)
+        # self.log.info('save size:{}/ file size:{}'.format(os.path.getsize(self.saveFilePath), self.downloadFileInfo['size']))
+        if os.path.getsize(self.saveFilePath) == int(self.downloadFileInfo['size']):
+            # self.sslDataSock.send(b'0') # recv finished
+            self.log.info('download file finished')
+            return (0, 'ok')
+        else:
+            # self.sslDataSock.send(b'2') # size not match
+            return (1, 'size not match')
 
     def checkCmdCode(func):
         def wrapper(self):
