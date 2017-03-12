@@ -2,9 +2,10 @@ import sys
 from core.system import Server
 
 if __name__ == '__main__':
-    sys.path.append('./')
-    if len(sys.argv) >= 3:
-        server = Server(address= sys.argv[1], port= sys.argv[2]).start()
+    sys.path.append('.')
+    if '-c' in sys.argv:
+        configurePath = sys.argv[sys.argv.index('-c') + 1]
     else:
-        server = Server()
+        configurePath = "cowry.conf"
+    server = Server(configurePath)
     server.start()

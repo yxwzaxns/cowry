@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 import pymysql
 from db import schema
 from db.schema import *
+from core.config import Settings
 
 class Db(object):
     """docstring for Db."""

@@ -1,8 +1,7 @@
-import socket, ssl, os
-import json, random, logging
-from ast import literal_eval
-from config import settings
+import socket, ssl
+from core.config import Settings
 from core.syslog import Syslog
+from core.utils import *
 
 
 # from utils import *
@@ -14,7 +13,7 @@ class BaseSocket(object):
         if arg:
             self.__dict__.update(arg)
         self.log = Syslog()
-        self.settings = settings()
+        self.settings = Settings()
         self.createSslConttext()
         self.createConnection()
 
@@ -73,8 +72,8 @@ class BaseSocket(object):
 
     def recvFile(self):
         self.log.info('######## start recv file ########')
-        loop = int(self.downloadFileInfo['size']) // 1024
-        extend = int(self.downloadFileInfo['size']) % 1024
+        loop = int(self.fileSize) // 1024
+        extend = int(self.fileSize) % 1024
         with open(self.saveFilePath, 'wb') as f:
             recvedFileSize = 0
             for i in range(loop):
@@ -92,7 +91,7 @@ class BaseSocket(object):
             f.write(recvfile)
             self.signal.recv.emit(0)
         # self.log.info('save size:{}/ file size:{}'.format(os.path.getsize(self.saveFilePath), self.downloadFileInfo['size']))
-        if os.path.getsize(self.saveFilePath) == int(self.downloadFileInfo['size']):
+        if calculateHashCodeForFile(self.saveFilePath) == self.fileHashCode:
             # self.sslDataSock.send(b'0') # recv finished
             self.log.info('download file finished')
             return (0, 'ok')
@@ -110,7 +109,7 @@ class BaseSocket(object):
 
     def setupCmdCode(func):
         def wrapper(self, msg):
-            self.lastCmdCode = str(random.randrange(10000,99999))
+            self.lastCmdCode = str(generateRandomDigitFromRange(10000, 99999))
             # print('*********** send msg len is :{},type is {}, info is {}'.format(len(msg),type(msg),msg))
             msg['code'] = self.lastCmdCode
             return func(self, msg)
@@ -145,7 +144,7 @@ class BaseSocket(object):
         except Exception as e:
             return (1, str(e))
         else:
-            self.recvInfo = literal_eval(recvInfo.decode('utf8'))
+            self.recvInfo = rebuildDictFromBytes(recvInfo)
             self.log.info('recv info {}'.format(recvInfo.strip()))
             return (0, "ok")
 

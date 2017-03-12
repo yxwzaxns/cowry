@@ -234,4 +234,4 @@ class Ui_MainWindow(object):
         self.Setlist.setText(_translate("MainWindow", "setlist"))
         self.Download_2.setText(_translate("MainWindow", "download"))
 
-import resources_rc
+from resources import resources_rc

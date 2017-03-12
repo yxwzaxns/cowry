@@ -1,7 +1,8 @@
 from PyQt5.QtCore import pyqtSignal, QObject
-import threading, _thread, os
-from core.baseSocket import BaseSocket
 from PyQt5 import QtWidgets
+import threading
+from core.baseSocket import BaseSocket
+from core.utils import *
 
 class DownloadSignal(QObject):
     # def __init__(self):
@@ -11,7 +12,7 @@ class DownloadSignal(QObject):
 
 class Download(threading.Thread, BaseSocket):
     """docstring for Upload."""
-    def __init__(self, remote, downloadfileinfo, savefilepath, authtoken):
+    def __init__(self, remote, downloadfileinfo, savefilepath, authtoken, filehashcode, filesize):
         BaseSocket.__init__(self, host = remote[0], port = remote[1])
         threading.Thread.__init__(self)
         # UploadSignal.__init__(self)
@@ -20,6 +21,8 @@ class Download(threading.Thread, BaseSocket):
         self.saveFilePath = savefilepath
         self.downloadFileInfo = downloadfileinfo
         self.authtoken = authtoken
+        self.fileHashCode = filehashcode
+        self.fileSize = filesize
         self.step = 0
 
         # signal connect
@@ -54,7 +57,7 @@ class Download(threading.Thread, BaseSocket):
         elif p == 1:
             # self.log.info('recvMark : {}'.format(info))
             self.step += 1
-            k = int(self.step * 1024 / int(self.downloadFileInfo['size']) * 100)
+            k = int(self.step * 1024 / int(self.fileSize) * 100)
             self.callProgressGui((k, "{}%".format(k)))
 
     def callProgressGui(self, progress):

@@ -1,9 +1,7 @@
 import socket, ssl
-import json, random
-from ast import literal_eval
-from config import Settings
+from core.config import Settings
 from core.syslog import Syslog
-# from utils import *
+from core.utils import *
 
 class BaseSocket(object):
     """docstring for Client."""
@@ -12,8 +10,11 @@ class BaseSocket(object):
         # self.clientSocket = clientSocket
         # self.clientAddress = clientAddress
         self.log = Syslog()
+        self.settings = Settings()
 
-        self.SEND_BUFFER_SIZE = 1024
+        self.SEND_CMD_BUFFER_SIZE = self.settings['DEFAULT'].getint('SEND_CMD_BUFFER_SIZE')
+        self.SEND_FILE_BUFFER_SIZE = self.settings['DEFAULT'].getint('SEND_FILE_BUFFER_SIZE')
+        self.RECV_CMD_BUFFER_SIZE = self.settings['DEFAULT'].getint('RECV_CMD_BUFFER_SIZE')
 
         self.__dict__.update(arg)
 
@@ -23,7 +24,7 @@ class BaseSocket(object):
     def fillSnedMsg(func):
         def wrapper(self, msg):
             msg = str.encode(str(msg))
-            fillSize = self.SEND_BUFFER_SIZE - len(msg)
+            fillSize = self.SEND_CMD_BUFFER_SIZE - len(msg)
             msg = b''.join((msg, b' ' * fillSize))
             # print('resize send msg len is :{},type is {}, info is {}'.format(len(msg),type(msg),msg))
             return func(self, msg)
@@ -52,22 +53,47 @@ class BaseSocket(object):
 
     def recvMsg(self):
         try:
-            info_tmp = self.clientSocket.recv(1024)
+            info_tmp = self.clientSocket.recv(self.RECV_CMD_BUFFER_SIZE)
         except Exception as e:
             return (1, str(e))
         else:
-            print("##########{}############".format(len(info_tmp)))
+            self.log.info("##########{}############".format(len(info_tmp)))
             info_tmp = info_tmp.strip()
-            print("***********{}****************".format(info_tmp))
+            self.log.info("***********{}****************".format(info_tmp))
             try:
-                self.recvInfo = literal_eval(info_tmp.decode('utf8'))
+                self.recvInfo = rebuildDictFromBytes(info_tmp)
             except Exception as e:
                 return (1, str(e))
             else:
                 return (0, "ok")
 
+    def recvFile(self):
+        self.log.info('######## start recv file ########')
+        loop = self.fileSize // 1024
+        extend = self.fileSize % 1024
+        with open(self.uploadFilePath, 'wb') as f:
+            recvedFileSize = 0
+            for i in range(loop):
+                recvfile = self.clientSocket.recv(self.RECV_CMD_BUFFER_SIZE)
+                # self.log.info('receving data of file is : {:.2f}%'.format(recvedFileSize / filesize * 100))
+                f.write(recvfile)
+                self.log.info('start recv {} loop'.format(i))
+                self.log.info('this task need to loop {}, the last info size of info is : {}'.format(loop, extend))
+
+                recvedFileSize += len(recvfile)
+                self.clientSocket.send(b'1') # receiving file
+            recvfile = self.clientSocket.recv(extend)
+            f.write(recvfile)
+        if getSizeByPath(self.uploadFilePath) == self.fileSize:
+            self.clientSocket.send(b'0') # recv finished
+            self.log.info('upload finished')
+            return (0, 'ok')
+        else:
+            self.clientSocket.send(b'2') # size not match
+            return (1, 'size not match')
+
     def close(self):
-        print("worker subprocess end")
+        self.log.info("worker subprocess end")
         self.clientSocket.shutdown(socket.SHUT_RDWR)
         self.clientSocket.close()
 
@@ -83,7 +109,7 @@ class BaseSocket(object):
         self.dataSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # bind the socket to a public host, and a well-known port
         while True:
-            randomPort = random.randrange(2333,2433)
+            randomPort = generateRandomDigitFromRange(2333,2433)
             try:
                 self.dataSocket.bind(('127.0.0.1', int(randomPort)))
             except Exception as e:
@@ -97,7 +123,7 @@ class BaseSocket(object):
 
 
     def test():
-        print('host')
+        self.log.info('host')
 
 
 

@@ -1,7 +1,6 @@
-import threading, os, socket, hashlib
+import threading
 from core.baseSocket import BaseSocket
-from config import Settings
-from ast import literal_eval
+from core.utils import *
 
 class Download(threading.Thread, BaseSocket):
     """docstring for Upload."""
@@ -9,13 +8,9 @@ class Download(threading.Thread, BaseSocket):
         # super(Upload, self).__init__()
         BaseSocket.__init__(self, sslContext = sslContext, dataSock = dataSock)
         threading.Thread.__init__(self)
-        self.settings = Settings()
-
         self.fileInfo = fileinfo
         self.authtoken = authtoken
-        self.sslContext = sslContext
-        self.dataSock = dataSock
-        self.downloadFilePath = os.path.join(self.settings.datapath, self.fileInfo.hashcode)
+        self.downloadFilePath = joinFilePath(self.settings['STORAGE']['Datapath'], self.fileInfo.hashcode)
 
         self.createSslSock()
 
@@ -47,45 +42,3 @@ class Download(threading.Thread, BaseSocket):
                 # start send file
                 self.sendFile()
                 exit()
-
-    def checkFileIfUpload(self):
-        try:
-            with open(self.uploadFilePath, 'rb') as f:
-                fileHashCode = hashlib.md5(f.read()).hexdigest()
-                self.log.info('upload file md5 is :{}'.format(fileHashCode))
-        except Exception as e:
-            self.log.info("checkFileIfUpload : {}".format(str(e)))
-        else:
-            if fileHashCode == self.fileHashCode:
-                remsg = {"info": 'uploadReturn', 'code': '23333', 'status': '0'}
-            else:
-                os.remove(filepath)
-                remsg = {"info": 'uploadReturn', 'code': '23333', 'status': '1', 'reason': "md5 code not same as upload file"}
-            self.sendMsg(remsg)
-        self.close()
-
-
-    def recvFile(self, filesize):
-        self.log.info('######## start recv file ########')
-        loop = filesize // 1024
-        extend = filesize % 1024
-        with open(self.uploadFilePath, 'wb') as f:
-            recvedFileSize = 0
-            for i in range(loop):
-                recvfile = self.sslDataSock.recv(1024)
-                # self.log.info('receving data of file is : {:.2f}%'.format(recvedFileSize / filesize * 100))
-                f.write(recvfile)
-                self.log.info('start recv {} loop'.format(i))
-                self.log.info('this task need to loop {}, the last info size of info is : {}'.format(loop, extend))
-
-                recvedFileSize += len(recvfile)
-                self.sslDataSock.send(b'1') # receiving file
-            recvfile = self.sslDataSock.recv(extend)
-            f.write(recvfile)
-        if os.path.getsize(self.uploadFilePath) == filesize:
-            self.sslDataSock.send(b'0') # recv finished
-            self.log.info('upload finished')
-            return (0, 'ok')
-        else:
-            self.sslDataSock.send(b'2') # size not match
-            return (1, 'size not match')

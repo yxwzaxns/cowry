@@ -1,9 +1,8 @@
 from PyQt5.QtCore import pyqtSignal, QObject
 from core.baseSocket import BaseSocket
-from core.syslog import Syslog
 from core.upload import Upload
 from core.download import Download
-import hashlib, os
+from core.utils import *
 
 class Signal(QObject):
     # def __init__(self):
@@ -15,7 +14,6 @@ class FTPClient(BaseSocket):
     """docstring for FTPClient."""
     def __init__(self, **arg):
         super(FTPClient, self).__init__(**arg)
-        self.log = Syslog()
         self.signal = Signal()
 
     def login(self):
@@ -32,7 +30,7 @@ class FTPClient(BaseSocket):
             return (1, recvInfo[1])
 
         if self.recvInfo['status'] == '0':
-            return (0, 'Login Successd')
+            return (0, 'Login Successd', self.certInfo)
         else:
             return (1, self.recvInfo['reason'])
 
@@ -56,14 +54,10 @@ class FTPClient(BaseSocket):
         self.logout()
 
     def upload(self, filepath, pbar):
-        filename = os.path.basename(filepath)
-        filesize = os.path.getsize(filepath)
+        filename = getBaseNameByPath(filepath)
+        filesize = getSizeByPath(filepath)
+        fileHashCode = calculateHashCodeForFile(filepath)
         self.pbar = pbar
-        try:
-            with open(filepath, 'rb') as f:
-                fileHashCode = hashlib.md5(f.read()).hexdigest()
-        except Exception as e:
-            return (1, str(e))
 
         self.log.info('upload file md5 is :{}'.format(fileHashCode))
         uploadCmdCode = {'info': "upload", "code": "", "filename": filename, "filesize": filesize, "hash": fileHashCode }
@@ -111,11 +105,12 @@ class FTPClient(BaseSocket):
             elif self.recvInfo['status'] == '0':
                 downloadAuthCode = self.recvInfo['token']
                 remoteDataInfo = self.recvInfo['dataAddress']
-                # fileHashCode = self.recvInfo['hash']
+                fileHashCode = self.recvInfo['hashcode']
+                fileSize = self.recvInfo['size']
                 self.log.info('recv download auth token is : {}'.format(downloadAuthCode))
                 self.log.info('remote open data info : {}:{}'.format(remoteDataInfo[0],remoteDataInfo[1]))
 
-                self.downloadProcess = Download(remoteDataInfo, downloadFileInfo, saveFilePath, downloadAuthCode)
+                self.downloadProcess = Download(remoteDataInfo, downloadFileInfo, saveFilePath, downloadAuthCode, fileHashCode, fileSize)
                 # print(self.uploadProcess.__dict__)
                 self.downloadProcess.signal.p.connect(self.setPbarValue)
                 self.downloadProcess.start()

@@ -1,24 +1,22 @@
-import socket
-import ssl
-import sys
-import hashlib
+import socket, ssl
 from core.worker import Worker
 from core.database import Db
-import logging
 from core.status import Status
+from core.syslog import Syslog
+from core.config import Settings
+from core.utils import *
 
 class Server(Db):
     """docstring for Server."""
-    def __init__(self, **arg):
-        print('start init server')
+    def __init__(self, configurePath):
         super(Server, self).__init__()
-        if arg:
-            self.__dict__.update(arg)
+        self.init_configure(configurePath)
+        self.log = Syslog()
         self.init_db()
         self.init_status()
         self.init_ssl()
         self.init_socket()
-
+        self.log.info('start init server')
 
     address = '127.0.0.1'
     port = '2333'
@@ -26,7 +24,8 @@ class Server(Db):
     sslContext = ''
     serverSocket = ''
 
-    workers = []
+    def init_configure(self, configurePath):
+        self.settings = Settings(configPath= configurePath)
 
     def init_status(self):
         Status().start()
@@ -36,10 +35,11 @@ class Server(Db):
 
     def init_ssl(self):
         self.sslContext = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        self.sslContext.load_cert_chain(certfile="./certs/server.crt", keyfile="./certs/server.key")
+        self.log.info('start load certificates: {}'.format(self.settings.certificates.certificate))
+        self.sslContext.load_cert_chain(certfile= self.settings.certificates.certificate, keyfile= self.settings.certificates.privatekey)
 
     def init_socket(self):
-        print('start init server socket')
+        self.log.info('start init server socket')
         # create an INET, STREAMing socket
         self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -51,7 +51,7 @@ class Server(Db):
     def start(self):
         while True:
             (clientSocket, clientAddress) = self.serverSocket.accept()
-            print(clientSocket,'===', clientAddress)
+            self.log.info("{}<=====>{}".format(clientSocket, clientAddress))
             client = self.sslContext.wrap_socket(clientSocket,server_side=True)
             self.createWorker(client, clientAddress)
 
@@ -60,4 +60,3 @@ class Server(Db):
         # workerId = hashlib.md5(str(address).encode('utf8')).hexdigest()
         worker = Worker(clientSocket, address, self.Session, sslContext = self.sslContext)
         worker.start()
-        self.workers.append(worker)

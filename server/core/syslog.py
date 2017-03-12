@@ -1,5 +1,5 @@
 import logging
-from config import Settings
+from core.config import Settings
 
 class Syslog(object):
     """docstring for Syslog."""
@@ -10,7 +10,7 @@ class Syslog(object):
 
     def checkSetting(func):
         def wrapper(self, arg):
-            if self.settings.debug == 'True':
+            if self.settings.default.debug == 'True':
                 func(self, arg)
         return wrapper
 

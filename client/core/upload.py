@@ -1,7 +1,9 @@
 from PyQt5.QtCore import pyqtSignal, QObject
-import threading, _thread, os
-from core.baseSocket import BaseSocket
 from PyQt5 import QtWidgets
+import threading
+from core.baseSocket import BaseSocket
+from core.utils import *
+
 
 class UploadSignal(QObject):
     # def __init__(self):
@@ -16,7 +18,7 @@ class Upload(threading.Thread, BaseSocket):
         # UploadSignal.__init__(self)
         self.signal = UploadSignal()
         self.filepath = filepath
-        self.filename = os.path.basename(self.filepath)
+        self.filename = getBaseNameByPath(self.filepath)
         self.authtoken = authtoken
         self.step = 0
 
@@ -35,7 +37,7 @@ class Upload(threading.Thread, BaseSocket):
             self.lastCmdCode = '23333'
             self.log.info('start upload file : {}'.format(self.filepath))
 
-            _thread.start_new_thread(self.sendFile, ())
+            startNewThread(self.sendFile)
 
             # self.sendFile()
             self.drawProgress()
@@ -50,7 +52,7 @@ class Upload(threading.Thread, BaseSocket):
             exit()
 
     def drawProgress(self):
-        filesize = os.path.getsize(self.filepath)
+        filesize = getSizeByPath(self.filepath)
         info = self.recvMark()
         count = 0
         while True:

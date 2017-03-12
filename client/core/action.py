@@ -1,11 +1,10 @@
-import sys, time, os
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, QMessageBox,QFileDialog,QProgressBar,QWidget
 from PyQt5 import QtWidgets
 from core.ftpClient import FTPClient
-from mainwindow import Ui_MainWindow
-from upload import Ui_UploadFileDialog
-from download import Ui_DownloadFileDialog
+from resources.mainwindow import Ui_MainWindow
+from resources.upload import Ui_UploadFileDialog
+from resources.download import Ui_DownloadFileDialog
 from core.syslog import Syslog
 from core.utils import *
 
@@ -77,6 +76,7 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
             loginInfo = self.client.login()
             if loginInfo[0] == 0:
                 self.Infolist.addItem(str(loginInfo[1]))
+                self.Infolist.addItem(str().join(('Encryption with : ', loginInfo[2][2:29])))
                 self.loginStatus = True
                 self.refresh()
 
@@ -135,7 +135,7 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
 
         if retInfo[0]:
             filepath = retInfo[0]
-            filename = os.path.basename(filepath)
+            filename = getBaseNameByPath(filepath)
             self.log.info('prepare  file :{}'.format(filepath))
 
             self.upload_dialog = QtWidgets.QDialog()
@@ -172,7 +172,7 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
             downloadFileInfo = {}
             for i in range(4):
                 downloadFileInfo[filesInfo[i]] = selectFiles[0].text(i)
-            downloadFileName = str().join((downloadFileInfo['filename'], downloadFileInfo['profix']))
+            downloadFileName = str().join((downloadFileInfo['filename'], '.', downloadFileInfo['profix']))
             try:
                 retInfo = QFileDialog.getSaveFileName(self, 'Save download file', downloadFileName)
             except Exception as e:
@@ -217,7 +217,7 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
     def keyPressEvent(self, e):
 
         if e.key() == Qt.Key_Escape:
-            self.close()
+            self.quit()
 
     def setdefaultinfo(self):
         self.Host.setText('127.0.0.1')
