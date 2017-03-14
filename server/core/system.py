@@ -1,4 +1,4 @@
-import socket, ssl
+import socket, ssl, platform
 from core.worker import Worker
 from core.database import Db
 from core.status import Status
@@ -23,6 +23,30 @@ class Server(Db):
 
     sslContext = ''
     serverSocket = ''
+
+    def init_check(self):
+        system_python_version = platform.python_version()
+        if float(system_python_version[:-2]) < 3.5:
+            self.log.error(' Version of python on your system is less than 3.5, Cowry software not install here !!')
+            exit()
+        system_type = platform.system()
+        if system_type = 'Linux':
+            self.defaultConfigPath = '/etc/cowry/'
+        elif system_type = 'Darwin':
+            self.defaultConfigPath = '/etc/cowry/'
+        elif system_type = 'Windows':
+            self.defaultConfigPath = 'C:\\cowry'
+        else:
+            self.log.error("can't recognize type of your system, Cowry must be installed on Windows, Linux or Darwin system")
+            exit()
+        try:
+            os.stat(self.defaultConfigPath)
+        except FileNotFoundError:
+            try:
+                os.mkdir(self.defaultConfigPath)
+            except Exception as e:
+                self.log.error(str(e))
+
 
     def init_configure(self, configurePath):
         self.settings = Settings(configPath= configurePath)
