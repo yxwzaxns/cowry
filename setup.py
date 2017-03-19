@@ -11,46 +11,33 @@ run it:
 """
 import re
 import ast
-from setuptools import setup
-
-
-_version_re = re.compile(r'__version__\s+=\s+(.*)')
-
-with open('flask/__init__.py', 'rb') as f:
-    version = str(ast.literal_eval(_version_re.search(
-        f.read().decode('utf-8')).group(1)))
-
+from setuptools import setup, find_packages
 
 setup(
-    name='Flask',
-    version=version,
+    name='Cowry',
+    version='0.1al',
     url='https://github.com/yxwzaxns/cowry',
     license='MIT',
     author='aong',
     author_email='yxwzaxns@gmail.com',
     description='A Secure FTPS system',
     long_description=__doc__,
-    packages=['cowry'],
+    packages=find_packages(exclude=['client', 'server']),
     include_package_data=True,
     zip_safe=False,
-    platforms='Linux,MacOS',
+    platforms='Linux,MacOS,Windows',
     install_requires=[
-        'Werkzeug>=0.7',
-        'Jinja2>=2.4',
-        'itsdangerous>=0.21',
-        'click>=2.0',
+        'PyQt5'
     ],
     classifiers=[
-        'Development Status :: 4 - Beta',
-        'Environment :: Web Environment',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: BSD License',
+        'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3.5',
-        'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
-        'Topic :: Software Development :: Libraries :: Python Modules'
+        'Programming Language :: Python :: 3.5'
     ],
+    keywords='FTPS',
     entry_points='''
 
     '''

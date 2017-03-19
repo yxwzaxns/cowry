@@ -1,4 +1,4 @@
-import os, hashlib, random, _thread, uuid, time
+import os, hashlib, random, _thread, uuid, time, shutil
 from ast import literal_eval
 
 def prettySize(num, suffix='B'):
@@ -21,8 +21,9 @@ def calculateHashCodeForFile(filepath):
     except Exception as e:
         return (1, str(e))
     return fileHashCode
-def calculateHashCodeForString(str):
-    return hashlib.md5(str.encode('utf8')).hexdigest()
+def calculateHashCodeForString(str, method= 'md5'):
+    return getattr(hashlib, method)(str.encode('utf8')).hexdigest()
+    # return hashlib.md5(str.encode('utf8')).hexdigest()
 
 def generateRandomDigitFromRange(start, end):
     return random.randrange(start, end)
@@ -51,3 +52,9 @@ def joinFilePath(*params):
 
 def deleteFile(filepath):
     os.remove(filepath)
+
+def getenv(name):
+    return os.getenv(name)
+
+def delfolder(folderpath):
+    shutil.rmtree(folderpath)

@@ -11,26 +11,28 @@ class Db(object):
     """docstring for Db."""
     def __init__(self):
         super(Db, self).__init__()
-        print('start init server db')
-        # try:
-        #
-        # except Exception as e:
-        #     print(Exception,':', e)
-        # else:
         self.engine = create_engine('mysql+pymysql://root:1234@127.0.0.1:3306/cowry', encoding='utf-8', pool_recycle=3600)
         self.Session = sessionmaker(bind = self.engine)
         # self.session = self.Session()
 
-        self.user = user.User
-        self.admin = admin.Admin
-        self.file = file.File
+        self.tables = schema.__all__
+        for t in self.tables:
+            setattr(self, t, getattr(getattr(schema, t), t.title()))
 
     def initDB(self):
-        for table in schema.__all__:
+        for table in self.tables:
             try:
                 getattr(self, table).metadata.create_all(self.engine)
             except Exception as e:
                 print(Exception,':', e)
+
+    def drop(self):
+        for table in self.tables:
+            if getattr(self, table).__table__.exists(self.engine):
+                try:
+                    getattr(self, table).__table__.drop(self.engine)
+                except Exception as e:
+                    print(Exception,':', e)
 
     def seed(self):
         pass
