@@ -99,11 +99,13 @@ class BaseSocket(object):
 
 
     def createSslSock(self):
+        self.log.info('start perpare accept data connecting ......')
         self.clientSock, self.clientAddress = self.dataSock.accept()
+        self.log.info('recv data connecting, client info is : {}'.format(self.clientAddress))
         self.clientSocket = self.sslContext.wrap_socket(self.clientSock, server_side=True)
 
     def createDataSock(self):
-        self.log.info('start create data  socket')
+        self.log.info('start create data socket')
         # create an INET, STREAMing socket
         self.dataSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.dataSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -111,15 +113,17 @@ class BaseSocket(object):
         while True:
             randomPort = generateRandomDigitFromRange(2333,2433)
             try:
-                self.dataSocket.bind(('127.0.0.1', int(randomPort)))
+                self.dataSocket.bind((getenv('COWRY_HOST'), int(randomPort)))
             except Exception as e:
                 self.log.info(str(e))
             else:
                 dataSocketInfo = self.dataSocket.getsockname()
+                self.log.info('data socket create successd on : {}'.format(dataSocketInfo))
                 break
         # become a server socket
         self.dataSocket.listen(1)
-        return (0, dataSocketInfo)
+        # return data port
+        return (0, randomPort)
 
 
     def test():

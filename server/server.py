@@ -1,5 +1,6 @@
 import os
 from core.system import Server
+from core.utils import *
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", "--new", help="start init cowry server", action="store_true")
@@ -14,18 +15,21 @@ if __name__ == '__main__':
     cmd = 'start'
     if args.new:
         cmd = 'new'
+
     if args.drop:
         print('start drop cowry')
         cmd = 'drop'
+
     if args.config:
         print('read config from :', args.config)
         # configurePath = sys.argv[sys.argv.index('-c') + 1]
-        os.environ['COWRY_CONFIG'] = defaultConfigPath
+        setenv('COWRY_CONFIG', defaultConfigPath)
     else:
         currentPath = os.getcwd()
+        setenv('COWRY_ROOT', currentPath)
         defaultConfigPath = os.path.join(currentPath, 'cowry.conf')
         if os.path.isfile(defaultConfigPath):
-            os.environ['COWRY_CONFIG'] = defaultConfigPath
+            setenv('COWRY_CONFIG', defaultConfigPath)
         else:
             print('Not find default configure file')
             exit()

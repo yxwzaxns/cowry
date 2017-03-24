@@ -33,3 +33,38 @@ def startNewThread(work, params= ()):
         _thread.start_new_thread(work, params)
     else:
         _thread.start_new_thread(work, ())
+
+def delfolder(folderpath):
+    shutil.rmtree(folderpath)
+
+def generateAuthToken():
+    return uuid.uuid4().hex.upper()
+
+def getCurrentTime():
+    return time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+
+def joinFilePath(*params):
+    params = [x for x in params]
+    return os.path.join(*params)
+
+def deleteFile(filepath):
+    os.remove(filepath)
+
+def getenv(name):
+    return os.getenv(name)
+
+def setenv(name, value):
+    os.environ[name] = str(value)
+
+def delfolder(folderpath):
+    shutil.rmtree(folderpath)
+
+def checkFileExists(filepath):
+    return os.path.isfile(filepath)
+
+def verifyDomain(domain):
+    reg = '^[a-z0-9]([a-z0-9-]+\.){1,}[a-z0-9]+\Z'
+    return re.search(reg, domain)
+
+def getHostAddr():
+    return socket.gethostbyname(socket.gethostname())

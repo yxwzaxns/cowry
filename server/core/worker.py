@@ -63,12 +63,13 @@ class Worker(threading.Thread, BaseSocket):
             remsg = {'info': 'upload', 'code': self.recvInfo['code'], 'status': '1', 'reason': str(e)}
             self.sendMsg(remsg)
 
-        retInfo = self.createDataSock() #return (int, tuple(ip,port))
+        retInfo = self.createDataSock() #return (int, port)
         if retInfo[0] == 1:
             self.log.info('createDataSock fails: {}'.format(retInfo[1]))
 
+        data_channel_info = (getenv('COWRY_HOST'), retInfo[1])
         authToken = generateAuthToken()
-        remsg = {'info': 'upload', 'code': self.recvInfo['code'], 'status': '0', 'token': authToken, 'dataAddress': retInfo[1]}
+        remsg = {'info': 'upload', 'code': self.recvInfo['code'], 'status': '0', 'token': authToken, 'dataAddress': data_channel_info}
         retInfo = self.sendMsg(remsg)
         if retInfo[0] == 1:
             self.log.info('sendMsg fails: {}'.format(retInfo[1]))
@@ -104,8 +105,9 @@ class Worker(threading.Thread, BaseSocket):
                 if retInfo[0] == 1:
                     self.log.info('createDataSock fails: {}'.format(retInfo[1]))
 
+                data_channel_info = (getenv('COWRY_HOST'), retInfo[1])
                 authToken = generateAuthToken()
-                remsg = {'info': 'download', 'code': self.recvInfo['code'], 'status': '0', 'token': authToken, 'dataAddress': retInfo[1], 'hashcode': fileInfo.hashcode, 'size': fileInfo.size}
+                remsg = {'info': 'download', 'code': self.recvInfo['code'], 'status': '0', 'token': authToken, 'dataAddress': data_channel_info, 'hashcode': fileInfo.hashcode, 'size': fileInfo.size}
                 retInfo = self.sendMsg(remsg)
                 if retInfo[0] == 1:
                     self.log.info('sendMsg fails: {}'.format(retInfo[1]))

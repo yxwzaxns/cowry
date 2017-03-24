@@ -14,6 +14,7 @@ class BaseSocket(object):
             self.__dict__.update(arg)
         self.log = Syslog()
         self.settings = Settings()
+        self.save_remote_cert()
         self.createSslConttext()
         self.createConnection()
 
@@ -43,7 +44,7 @@ class BaseSocket(object):
         self.log.info('start createConnection')
         try:
             tmpSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.ctrlSock = self.sslContext.wrap_socket(tmpSock, server_hostname = '127.0.0.1')
+            self.ctrlSock = self.sslContext.wrap_socket(tmpSock, server_hostname = self.host)
             self.ctrlSock.connect((self.host, int(self.port)))
         except Exception as e:
             self.log.info(str(e))
@@ -54,10 +55,31 @@ class BaseSocket(object):
 
     def createSslConttext(self):
         self.sslContext = ssl.create_default_context()
-        self.sslContext.load_verify_locations(self.settings['certificates']['PublicKey'])
+        try:
+            self.sslContext.load_verify_locations(self.settings.certificates.certificate)
+        except Exception as e:
+            self.log.error(str(e))
 
     def createDataSock(self):
         self.dataSock = self.ctrlSock
+
+    def save_remote_cert(self):
+        if not checkFileExists(self.settings.certificates.certificate):
+            self.log.info('start acquire remote host cert')
+            try:
+                cert = ssl.get_server_certificate((self.host, self.port))
+            except Exception as e:
+                self.log.info('can\' t load remote certificate :{}'.format(str(e)))
+                return (1, str(e))
+            try:
+                with open(self.settings.certificates.certificate, 'w') as f:
+                    f.write(cert)
+            except Exception as e:
+                self.log.info('can\' t save remote certificate on local :{}'.format(str(e)))
+                return (1, str(e))
+            else:
+                self.log.info('load and save remote server cert successd')
+                return (0, 'ok')
 
     def sendFile(self):
         with open(self.filepath, 'rb') as f:

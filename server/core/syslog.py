@@ -17,3 +17,9 @@ class Syslog(object):
     @checkSetting
     def info(self, i):
         logging.warning(i)
+
+    def error(self, i):
+        logging.error(i)
+
+    def warning(self, i):
+        logging.warning(i)

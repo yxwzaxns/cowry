@@ -23,6 +23,9 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
         self.log = Syslog()
         # self.Infolist.scrollToBottom()
 
+    def start(self):
+        self.show()
+
     def getinfo(self):
         # QtWidgets.QMessageBox.information(self.pushButton,"标题","这是第一个PyQt5 GUI程序")
        msg = QtWidgets.QMessageBox()
@@ -79,28 +82,6 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
                 self.Infolist.addItem(str().join(('Encryption with : ', loginInfo[2][2:29])))
                 self.loginStatus = True
                 self.refresh()
-
-                # start files list
-                # fileList = self.client.list('/')
-                # if listInfo[0] == 0:
-                #     fileList = QtWidgets.QTreeWidgetItem([" /"])
-                #     if listInfo[1] and type(listInfo[1]) is list:
-                #         for file in listInfo[1]:
-                #             fileItem = QtWidgets.QTreeWidgetItem([file['name'], file['postfix'], file['size'], file['updatetime']])
-                #             fileList.addChild(fileItem)
-                #     self.Filetree.addTopLevelItem(fileList)
-                #     # print(QtWidgets.QTreeWidgetItem.indexOfChild(fileList))
-                #     self.Filetree.expandToDepth(0)
-                # else:
-                #     self.Infolist.addItem(str(listInfo[1]))
-
-
-                # self.fileList.addItem(self.client.certInfo)
-                # self.Filetree.topLevelItem(0).setText(0, QtCore.QCoreApplication.translate("MainWindow", "/"))
-                # self.Filetree.topLevelItem(0).child(1).setText(0, QtCore.QCoreApplication.translate("MainWindow", "sw"))
-                # self.Filetree.topLevelItem(0).child(1).setText(1, QtCore.QCoreApplication.translate("MainWindow", "a"))
-                # self.Filetree.topLevelItem(0).child(1).setText(2, QtCore.QCoreApplication.translate("MainWindow", "a"))
-                # self.Filetree.topLevelItem(0).child(1).setText(3, QtCore.QCoreApplication.translate("MainWindow", "a"))
             else:
                 # print(type(loginInfo),type(loginInfo[1]), loginInfo)
                 self.Infolist.addItem(loginInfo[1])
@@ -151,14 +132,6 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
                 self.Infolist.addItem('file upload successd')
             else:
                 self.Infolist.addItem(retInfo[1])
-            # self.upload_dialog.close()
-
-                # self.btn = QPushButton('Start', self)
-                # self.btn.move(40, 80)
-                # self.btn.clicked.connect(self.change)
-                # self.pbar.show()
-        # print(type(self.Filetree))
-        # self.Filetree.topLevelItem(0).setText(0, QtCore.QCoreApplication.translate("MainWindow", "/"))
 
     @auth
     def download(self):

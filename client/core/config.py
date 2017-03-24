@@ -1,16 +1,25 @@
 from configparser import ConfigParser
+from core.utils import *
 
 class Settings(ConfigParser):
     """docstring for Settings."""
-    def __init__(self, configPath= None):
+    def __init__(self):
         super(Settings, self).__init__()
-        if configPath is None:
-            self.configurePath = "cowry.conf"
-        else:
-            self.configurePath =  configPath
+        self.configurePath =  getenv('COWRY_CONFIG')
         self.read(self.configurePath)
 
         self.analysis()
+
+    def autosave(func):
+        def wrapper(self, conf):
+            func(self, conf)
+            with open(self.configurePath, 'w') as f:
+                self.write(f)
+        return wrapper
+
+    @autosave
+    def _set(self, conf):
+        self.set(str(conf[0].upper()), str(conf[1]), str(conf[2]))
 
     def analysis(self):
         sections = [x.lower() for x in self.keys()]

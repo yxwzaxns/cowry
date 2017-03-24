@@ -2,6 +2,7 @@ from PyQt5.QtCore import pyqtSignal, QObject
 from core.baseSocket import BaseSocket
 from core.upload import Upload
 from core.download import Download
+from core.config import Settings
 from core.utils import *
 
 class Signal(QObject):
@@ -15,6 +16,7 @@ class FTPClient(BaseSocket):
     def __init__(self, **arg):
         super(FTPClient, self).__init__(**arg)
         self.signal = Signal()
+        self.settings = Settings()
 
     def login(self):
         self.log.info('start login')
