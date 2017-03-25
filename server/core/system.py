@@ -75,8 +75,8 @@ class Server():
                 # a server domain is valid in configure file
                 # the server will use this domain to generate a new certificate
                 self.ssl.create_self_signed_cert(self.settings.server.bind_domain)
-            elif getHostAddr() == self.settings.server.bind_address:
-                self.ssl.create_self_signed_cert(self.settings.server.bind_address)
+            elif self.settings.server.bind_address:
+                self.ssl.create_self_signed_cert(self.settings.certificates.cn)
             else:
                 self.log.error("can't read valid domain or IP adress from configure file, create a new certificate need it")
         # start load certificate
