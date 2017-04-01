@@ -1,6 +1,6 @@
 [DEFAULT]
 debug = True
-inited = 1
+inited = 0
 send_file_buffer_size = 1024
 recv_file_buffer_size = 1024
 send_cmd_buffer_size = 1024
@@ -18,8 +18,8 @@ state = GX
 city = GL
 organization = university of electronic technology
 unit = guet
-privatekey = /Users/ruby/workspace/git/cowry/server/certs/server.key
-certificate = /Users/ruby/workspace/git/cowry/server/certs/server.cert
+privatekey =
+certificate =
 
 [DATABASE]
 type = sqlite
@@ -29,7 +29,7 @@ user = root
 password = 1234
 dbname = cowry
 charset = utf8
-df = /Users/ruby/workspace/git/cowry/server/db/data/default.sqlite
+df =
 
 [STORAGE]
-datapath = /Users/ruby/workspace/git/cowry/server/data
+datapath =

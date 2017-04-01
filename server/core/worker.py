@@ -3,8 +3,9 @@ from core.baseSocket import BaseSocket
 from core.database import Db
 from core.upload import Upload
 from core.download import Download
-from db.schema import *
+from db import schema
 from sqlalchemy import and_
+from core.config import Settings
 from core.utils import *
 
 
@@ -15,11 +16,12 @@ class Worker(threading.Thread, BaseSocket):
         threading.Thread.__init__(self)
         self.sslContext = sslContext
         self.authenticated = False
+        self.settings = Settings()
 
         # db init
         self.session = db_session()
-        self.user = user.User
-        self.file = file.File
+        self.user = schema.user.User
+        self.file = schema.file.File
 
 
     def run(self):
@@ -27,7 +29,14 @@ class Worker(threading.Thread, BaseSocket):
         while True:
             recvInfo = self.recvMsg()
             if recvInfo[0] == 1:
-                self.log.info("can't recvMsg : {}".format(recvInfo[1]))
+                self.log.info("recvMsg error : {}".format(recvInfo[1]))
+                self.log.error('exit worker process !!')
+                self.exit()
+            elif recvInfo[0] == 2:
+                # self.log.info('recvMsg is null, continue next recving.')
+                continue
+            elif recvInfo[0] == 3:
+                self.log.info('recvMsg can\'t convert a dict')
                 self.exit()
             elif self.recvInfo:
                 self.log.info('Received cmd code : {}'.format(self.recvInfo))
@@ -41,6 +50,7 @@ class Worker(threading.Thread, BaseSocket):
                 self.exit()
 
     def auth(func):
+        """A decorator for auth worker action."""
         def wrapper(self):
             if self.loginStatus == True:
                 func(self)
@@ -67,7 +77,7 @@ class Worker(threading.Thread, BaseSocket):
         if retInfo[0] == 1:
             self.log.info('createDataSock fails: {}'.format(retInfo[1]))
 
-        data_channel_info = (getenv('COWRY_HOST'), retInfo[1])
+        data_channel_info = (self.settings.certificates.cn, retInfo[1])
         authToken = generateAuthToken()
         remsg = {'info': 'upload', 'code': self.recvInfo['code'], 'status': '0', 'token': authToken, 'dataAddress': data_channel_info}
         retInfo = self.sendMsg(remsg)
@@ -105,7 +115,7 @@ class Worker(threading.Thread, BaseSocket):
                 if retInfo[0] == 1:
                     self.log.info('createDataSock fails: {}'.format(retInfo[1]))
 
-                data_channel_info = (getenv('COWRY_HOST'), retInfo[1])
+                data_channel_info = (self.settings.certificates.cn, retInfo[1])
                 authToken = generateAuthToken()
                 remsg = {'info': 'download', 'code': self.recvInfo['code'], 'status': '0', 'token': authToken, 'dataAddress': data_channel_info, 'hashcode': fileInfo.hashcode, 'size': fileInfo.size}
                 retInfo = self.sendMsg(remsg)

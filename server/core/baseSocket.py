@@ -1,7 +1,7 @@
 import socket, ssl
 from core.config import Settings
 from core.syslog import Syslog
-from core.utils import *
+from core import utils
 
 class BaseSocket(object):
     """docstring for Client."""
@@ -53,19 +53,20 @@ class BaseSocket(object):
 
     def recvMsg(self):
         try:
-            info_tmp = self.clientSocket.recv(self.RECV_CMD_BUFFER_SIZE)
+            info_tmp = self.clientSocket.recv(self.RECV_CMD_BUFFER_SIZE).strip()
         except Exception as e:
             return (1, str(e))
         else:
-            self.log.info("##########{}############".format(len(info_tmp)))
-            info_tmp = info_tmp.strip()
-            self.log.info("***********{}****************".format(info_tmp))
-            try:
-                self.recvInfo = rebuildDictFromBytes(info_tmp)
-            except Exception as e:
-                return (1, str(e))
+            if len(info_tmp) == 0:
+                self.log.info('recv a null info')
+                return (2, 'a null info')
             else:
-                return (0, "ok")
+                try:
+                    self.recvInfo = utils.rebuildDictFromBytes(info_tmp)
+                except Exception as e:
+                    return (3, str(e))
+                else:
+                    return (0, "ok")
 
     def recvFile(self):
         self.log.info('######## start recv file ########')
@@ -84,7 +85,7 @@ class BaseSocket(object):
                 self.clientSocket.send(b'1') # receiving file
             recvfile = self.clientSocket.recv(extend)
             f.write(recvfile)
-        if getSizeByPath(self.uploadFilePath) == self.fileSize:
+        if utils.getSizeByPath(self.uploadFilePath) == self.fileSize:
             self.clientSocket.send(b'0') # recv finished
             self.log.info('upload finished')
             return (0, 'ok')
@@ -111,9 +112,9 @@ class BaseSocket(object):
         self.dataSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # bind the socket to a public host, and a well-known port
         while True:
-            randomPort = generateRandomDigitFromRange(2333,2433)
+            randomPort = utils.generateRandomDigitFromRange(2333,2433)
             try:
-                self.dataSocket.bind((getenv('COWRY_HOST'), int(randomPort)))
+                self.dataSocket.bind((utils.getenv('COWRY_HOST'), int(randomPort)))
             except Exception as e:
                 self.log.info(str(e))
             else:
@@ -126,7 +127,7 @@ class BaseSocket(object):
         return (0, randomPort)
 
 
-    def test():
+    def test(self):
         self.log.info('host')
 
 

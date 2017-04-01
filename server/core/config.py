@@ -6,7 +6,7 @@ class Settings(ConfigParser):
     """docstring for Settings."""
     def __init__(self):
         super(Settings, self).__init__()
-        self.configurePath =  getenv('COWRY_CONFIG')
+        self.configurePath =  getenv('COWRY_CONFIG') or 'cowry.conf'
         self.read(self.configurePath)
 
         self.analysis()
@@ -16,6 +16,7 @@ class Settings(ConfigParser):
             func(self, conf)
             with open(self.configurePath, 'w') as f:
                 self.write(f)
+            self.analysis()
         return wrapper
 
     def analysis(self):

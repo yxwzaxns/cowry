@@ -1,27 +1,38 @@
-import socket, ssl, platform
+"""Cowry system core module."""
+import socket
+import ssl
+import platform
 from core.worker import Worker
 from core.database import Db
 from core.status import Status
 from core.syslog import Syslog
 from core.config import Settings
 from core.encrypt import SSLCertSetting
-from core.utils import *
+from core import utils
 
 class Server():
     """docstring for Server."""
+
     def __init__(self):
+        """Default model is start, Add some necessary for it."""
         super(Server, self).__init__()
-        self.log = Syslog()
-        self.settings = Settings()
-        self.ssl = SSLCertSetting()
-        self.db = Db()
-        # self.init_configure()
-        # self.init_db()
+        self.log = None
+        self.settings = None
+        self.ssl = None
+        self.db = None
+        self.systemStatus = None
+        self.serverSocket = None
+        self.defaultConfigPath = None
+
+        self.init_configure()
+        self.init_log()
 
     def init_check(self):
+        """Init check."""
         system_python_version = platform.python_version()
         if float(system_python_version[:-2]) < 3.5:
-            self.log.error(' Version of python on your system is less than 3.5, Cowry software not install here !!')
+            self.log.error(' Version of python on your system is less than 3.5, \
+                            Cowry software not install here !!')
             exit()
         system_type = platform.system()
         if system_type == 'Linux':
@@ -31,47 +42,94 @@ class Server():
         elif system_type == 'Windows':
             self.defaultConfigPath = 'C:\\cowry'
         else:
-            self.log.error("can't recognize type of your system, Cowry must be installed on Windows, Linux or Darwin system")
+            self.log.error("can't recognize type of your system, \
+                            Cowry must be installed on Windows, Linux or Darwin system")
             exit()
         try:
-            os.stat(self.defaultConfigPath)
+            # os.stat(self.defaultConfigPath)
+            pass
         except FileNotFoundError:
             try:
-                os.mkdir(self.defaultConfigPath)
+                pass
+                # os.mkdir(self.defaultConfigPath)
             except Exception as e:
                 self.log.error(str(e))
 
+    def init_db(self):
+        """Pass."""
+        self.db = Db()
 
     def init_configure(self):
-        self.log.info('start init configure file')
-        if not os.path.isabs(self.settings.storage.datapath) or not os.path.isdir(self.settings.storage.datapath):
-            setDefaultDataPath = os.path.join(getenv('COWRY_ROOT'), 'data')
-            if not os.path.isdir(setDefaultDataPath):
-                try:
-                    os.mkdir(setDefaultDataPath)
-                except Exception as e:
-                    self.log.error(str(e))
-            self.settings._set(('storage', 'datapath', setDefaultDataPath))
+        """Pass."""
+        # self.log.info('start init configure file')
+        if not utils.checkFileExists(utils.getenv('COWRY_CONFIG')):
+            src = utils.joinFilePath(utils.getenv('COWRY_ROOT'), 'cowry.conf.default')
+            dst = utils.joinFilePath(utils.getenv('COWRY_ROOT'), 'cowry.conf')
+            utils.copyfile(src, dst)
+            print('Not find default configure file, copy default configure to use')
 
+        self.settings = Settings()
+
+        # set default uploaded files path
+        if not utils.checkAbsPath(self.settings.storage.datapath) or not utils.checkFolderExists(self.settings.storage.datapath):
+            setDefaultDataPath = utils.joinFilePath(utils.getenv('COWRY_ROOT'), 'data')
+            self.settings._set(('storage', 'datapath', setDefaultDataPath))
+        # set default certificates values
+        if not utils.checkAbsPath(self.settings.certificates.privatekey) and not utils.checkAbsPath(self.settings.certificates.certificate):
+            setDefaultPrivateKey = utils.joinFilePath(utils.getenv('COWRY_ROOT'), 'certs', 'server.key')
+            setDefaultCert = utils.joinFilePath(utils.getenv('COWRY_ROOT'), 'certs', 'server.cert')
+            self.settings._set(('certificates', 'privatekey', setDefaultPrivateKey))
+            self.settings._set(('certificates', 'certificate', setDefaultCert))
+        # set db default path if sqlite be used
+        if self.settings.database.type == 'sqlite' and not self.settings.database.df:
+            setDefaultSqliteDbPath = utils.joinFilePath(utils.getenv('COWRY_ROOT'), 'db', 'data', 'default.sqlite')
+            self.settings._set(('database', 'df', setDefaultSqliteDbPath))
+
+    def init_folder(self):
+        """Pass."""
+        # create upload folders
+        if not utils.checkFolderExists(self.settings.storage.datapath):
+            try:
+                utils.makeDirs(self.settings.storage.datapath)
+            except Exception as e:
+                self.log.error('upload folder create : {}'.format(str(e)))
+        # create certs folders
+        cert_dir_name = utils.getDirNameByPath(self.settings.certificates.privatekey)
+        if not utils.checkFolderExists(cert_dir_name):
+            try:
+                utils.makeDirs(cert_dir_name)
+            except Exception as e:
+                self.log.error('cert folder create : {}'.format(str(e)))
+        # create database folders if system use sqlite
+        db_dir_name = utils.getDirNameByPath(self.settings.database.df)
+        if not utils.checkFolderExists(db_dir_name):
+            utils.makeDirs(db_dir_name)
+        if not utils.checkFolderExists(db_dir_name):
+            try:
+                utils.makeDirs(db_dir_name)
+            except Exception as e:
+                self.log.error('db folder create : {}'.format(str(e)))
+
+    def init_log(self):
+        """Pass."""
+        self.log = Syslog()
 
     def init_status(self):
-        Status().start()
+        """Pass."""
+        self.systemStatus = Status()
+        self.systemStatus.start()
 
     # def init_db(self):
     #     self.log.info('start init server db')
     #     self.db.initDB()
 
     def init_ssl(self):
+        self.ssl = SSLCertSetting()
         # check if the certificate exists, if not, sysytem should be auto generate a new certificate
-        if not checkFileExists(self.settings.certificates.privatekey) and not checkFileExists(self.settings.certificates.certificate):
-            # write path of certificates and privatekey into settings
-            setDefaultCertPath = os.path.join(getenv('COWRY_ROOT'), 'certs', 'server.crt')
-            setDefaultKeyPath = os.path.join(getenv('COWRY_ROOT'), 'certs', 'server.key')
-            self.settings._set(('certificates', 'certificate', setDefaultCertPath))
-            self.settings._set(('certificates', 'privatekey', setDefaultKeyPath))
+        if not utils.checkFileExists(self.settings.certificates.privatekey) and not utils.checkFileExists(self.settings.certificates.certificate):
             # generate new certificate
             # check if settings have bind doamin
-            if verifyDomain(self.settings.server.bind_domain):
+            if utils.verifyDomain(self.settings.server.bind_domain):
                 # a server domain is valid in configure file
                 # the server will use this domain to generate a new certificate
                 self.ssl.create_self_signed_cert(self.settings.server.bind_domain)
@@ -99,16 +157,21 @@ class Server():
 
     def init_setenv(self):
         # set host name
-        if verifyDomain(self.settings.server.bind_domain):
-            setenv('COWRY_HOST', self.settings.server.bind_domain)
-            self.log.info('system bind server name on : {}'.format(getenv('COWRY_HOST')))
+        if utils.verifyDomain(self.settings.server.bind_domain):
+            utils.setenv('COWRY_HOST', self.settings.server.bind_domain)
+            self.log.info('system bind server name on : {}'.format(utils.getenv('COWRY_HOST')))
         else:
-            setenv('COWRY_HOST', self.settings.server.bind_address)
-            self.log.info('system bind server name on : {}'.format(getenv('COWRY_HOST')))
+            utils.setenv('COWRY_HOST', self.settings.server.bind_address)
+            self.log.info('system bind server name on : {}'.format(utils.getenv('COWRY_HOST')))
 
     def new(self):
+        if self.settings.default.inited != '0':
+            print('System has been inited !!')
+            exit()
+
         self.log.info('Start congfigure a new cowry sysytem ...')
-        self.init_configure()
+        self.init_folder()
+        self.init_db()
         self.db.new()
         self.settings._set(('default', 'inited', '1'))
         self.log.info('Congfigure completed, watting for start up ...')
@@ -117,6 +180,7 @@ class Server():
         if self.settings.default.inited != '1':
             print('Please initialization system firstly !!!')
             exit()
+        self.init_db()
         self.init_ssl()
         self.init_socket()
         self.init_setenv()
@@ -129,21 +193,36 @@ class Server():
             self.createWorker(client, clientAddress)
 
     def drop(self):
+        """Clear system info and delete all info of cowry."""
+        # check if system been droped
+        # Check that the system has been deleted
+        if self.settings.default.inited == '0':
+            self.log.info('the system has been deleted'.title())
+            utils.deleteFile(utils.getenv('COWRY_CONFIG'))
+            exit()
         self.log.info('Start drop cowry system !!! ')
         # delete uploaded files
-        if os.path.isdir(self.settings.storage.datapath):
-            delfolder(self.settings.storage.datapath)
+        if utils.checkFolderExists(self.settings.storage.datapath):
+            utils.delfolder(self.settings.storage.datapath)
         # delete server certificates
-        if checkFileExists(self.settings.certificates.certificate) or checkFileExists(self.settings.certificates.privatekey):
-            deleteFile(self.settings.certificates.certificate)
-            deleteFile(self.settings.certificates.privatekey)
+        if utils.checkFileExists(self.settings.certificates.certificate) or utils.checkFileExists(self.settings.certificates.privatekey):
+            utils.deleteFile(self.settings.certificates.certificate)
+            utils.deleteFile(self.settings.certificates.privatekey)
+        utils.delfolder(utils.getDirNameByPath(self.settings.certificates.privatekey))
         # delete all database tables
+        self.init_db()
         self.db.drop()
+        # delete all database file if use sqlite
+        if self.settings.database.df:
+            utils.deleteFile(self.settings.database.df)
+            utils.delfolder(utils.getDirNameByPath(self.settings.database.df))
+        # delete configure file
+        utils.deleteFile(utils.getenv('COWRY_CONFIG'))
         self.log.info('Finished drop cowry system')
         exit()
 
 
     def createWorker(self, clientSocket, address):
         # workerId = hashlib.md5(str(address).encode('utf8')).hexdigest()
-        worker = Worker(clientSocket, address, self.db.Session, sslContext = self.sslContext)
+        worker = Worker(clientSocket, address, self.db.Session, sslContext=self.sslContext)
         worker.start()

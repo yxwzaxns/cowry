@@ -1,13 +1,12 @@
-import sys
-import sqlalchemy
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import pymysql
 from db import schema
-from db.schema import *
 from db.seed import seedData
 from core.config import Settings
+from core import utils
+
+MYSQL_URI = 'mysql+pymysql://{user}:{password}@{host}:{port}/{dbname}?charset={charset}'
+SQLITE_URI = 'sqlite:///{dbfile}'
 
 class Db(object):
     """docstring for Db."""
@@ -19,21 +18,32 @@ class Db(object):
         #     print(Exception,':', e)
         # else:
         self.settings = Settings()
-        DBURI = 'mysql+pymysql://{user}:{password}@{host}:{port}/{dbname}?charset={charset}'.format(
-                                                                                                      user= self.settings.database.user,
-                                                                                                      password = self.settings.database.password,
-                                                                                                      host = self.settings.database.host,
-                                                                                                      port = self.settings.database.port,
-                                                                                                      dbname = self.settings.database.dbname,
-                                                                                                      charset = self.settings.database.charset)
-        self.engine = create_engine(DBURI, encoding='utf-8', pool_recycle=3600)
-        self.Session = sessionmaker(bind = self.engine)
-        self.session = self.Session()
         self.tables = schema.__all__
         for t in self.tables:
             setattr(self, t, getattr(getattr(schema, t), t.title()))
+        self.initDB()
+        self.createSession()
 
     def initDB(self):
+        if self.settings.database.type == 'mysql':
+            import pymysql
+            DBURI = MYSQL_URI.format( user= self.settings.database.user,
+                                      password= self.settings.database.password,
+                                      host= self.settings.database.host,
+                                      port= self.settings.database.port,
+                                      dbname= self.settings.database.dbname,
+                                      charset= self.settings.database.charset)
+        elif self.settings.database.type == 'sqlite':
+            import sqlite3
+            DBURI = SQLITE_URI.format(dbfile= self.settings.database.df)
+        self.conn = DBURI
+
+    def createSession(self):
+        self.engine = create_engine(self.conn, encoding='utf-8', pool_recycle=3600)
+        self.Session = sessionmaker(bind = self.engine)
+        self.session = self.Session()
+
+    def createTables(self):
         for table in self.tables:
             if not getattr(self, table).__table__.exists(self.engine):
                 try:
@@ -42,7 +52,7 @@ class Db(object):
                     print(Exception,':', e)
 
     def new(self):
-        self.initDB()
+        self.createTables()
         self.seed()
 
     def drop(self):
@@ -60,13 +70,3 @@ class Db(object):
 
     def close(self):
         self.session.close()
-
-    @staticmethod
-    def table(tablename):
-        return getattr(self,tablename)
-
-if __name__ == '__main__':
-    sys.path.append('./')
-    db = Db()
-    db.initDB()
-    Db.seed()
