@@ -77,7 +77,7 @@ class Server():
         # set default certificates values
         if not utils.checkAbsPath(self.settings.certificates.privatekey) and not utils.checkAbsPath(self.settings.certificates.certificate):
             setDefaultPrivateKey = utils.joinFilePath(utils.getenv('COWRY_ROOT'), 'certs', 'server.key')
-            setDefaultCert = utils.joinFilePath(utils.getenv('COWRY_ROOT'), 'certs', 'server.cert')
+            setDefaultCert = utils.joinFilePath(utils.getenv('COWRY_ROOT'), 'certs', 'server.crt')
             self.settings._set(('certificates', 'privatekey', setDefaultPrivateKey))
             self.settings._set(('certificates', 'certificate', setDefaultCert))
         # set db default path if sqlite be used
