@@ -167,14 +167,26 @@ class BaseSocket(object):
 
     @checkCmdCode
     def recvMsg(self):
+        self.log.info('perpare recv info')
+        tmpRecvInfo = b''
         try:
             recvInfo = self.ctrlSock.recv(1024).strip()
         except Exception as e:
             return (1, str(e))
-        else:
-            self.recvInfo = utils.rebuildDictFromBytes(recvInfo)
-            self.log.info('recv info {}'.format(recvInfo.strip()))
-            return (0, "ok")
+        tmpRecvInfo += recvInfo
+
+        while len(recvInfo) == int(self.settings.default.recv_cmd_buffer_size):
+            self.log.info('recv length of info is over default length, start recv extend info')
+            try:
+                recvInfo = self.ctrlSock.recv(1024).strip()
+            except Exception as e:
+                return (1, str(e))
+            else:
+                tmpRecvInfo += recvInfo
+
+        self.recvInfo = utils.rebuildDictFromBytes(tmpRecvInfo)
+        self.log.info('recv info {}'.format(self.recvInfo))
+        return (0, "ok")
 
     def recvMark(self):
         try:

@@ -24,10 +24,24 @@ class BaseSocket(object):
     def fillSnedMsg(func):
         def wrapper(self, msg):
             msg = str.encode(str(msg))
-            fillSize = self.SEND_CMD_BUFFER_SIZE - len(msg)
-            msg = b''.join((msg, b' ' * fillSize))
-            # print('resize send msg len is :{},type is {}, info is {}'.format(len(msg),type(msg),msg))
-            return func(self, msg)
+            msgLentgh = len(msg)
+            if msgLentgh <= self.SEND_CMD_BUFFER_SIZE:
+                fillSize = self.SEND_CMD_BUFFER_SIZE - msgLentgh
+                msg = b''.join((msg, b' ' * fillSize))
+                # print('resize send msg len is :{},type is {}, info is {}'.format(len(msg),type(msg),msg))
+                self.log.info('perpare send recall info : {}'.format(msg))
+                return func(self, msg)
+            else:
+                loops = msgLentgh // self.SEND_CMD_BUFFER_SIZE
+                extendLentgh = msgLentgh % self.SEND_CMD_BUFFER_SIZE
+                self.log.info('perpare send recall info by {} loops: {}'.format(loops, msg))
+                for i in range(loops):
+                    retInfo = func(self, msg[i*self.SEND_CMD_BUFFER_SIZE:self.SEND_CMD_BUFFER_SIZE*(i + 1)])
+                    if retInfo[0] == 1:
+                        return retInfo
+                fillSize = self.SEND_CMD_BUFFER_SIZE - extendLentgh
+                extendmsg = b''.join((msg[loops*self.SEND_CMD_BUFFER_SIZE:], b' ' * fillSize))
+                return func(self, extendmsg)
         return wrapper
 
     @fillSnedMsg
