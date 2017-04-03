@@ -1,12 +1,12 @@
 from configparser import ConfigParser
-from core.utils import *
+from core import utils
 
 
 class Settings(ConfigParser):
     """docstring for Settings."""
     def __init__(self):
         super(Settings, self).__init__()
-        self.configurePath =  getenv('COWRY_CONFIG') or 'cowry.conf'
+        self.configurePath =  utils.getenv('COWRY_CONFIG') or 'cowry.conf'
         self.read(self.configurePath)
 
         self.analysis()
@@ -20,7 +20,6 @@ class Settings(ConfigParser):
         return wrapper
 
     def analysis(self):
-        sections = [x.lower() for x in self.keys()]
         confDict = {str(x.lower()): {str(y.lower()): self[x][y] for y in list(self[x].keys()) if y not in self.defaults().keys()} for x in list(self.keys())}
         confDict['default'] = dict(self.defaults())
         self.map(**confDict)

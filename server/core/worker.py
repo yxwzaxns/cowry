@@ -33,8 +33,8 @@ class Worker(threading.Thread, BaseSocket):
                 self.log.error('exit worker process !!')
                 self.exit()
             elif recvInfo[0] == 2:
-                # self.log.info('recvMsg is null, continue next recving.')
-                continue
+                self.log.info('recvMsg is null, close the connecting.')
+                self.exit()
             elif recvInfo[0] == 3:
                 self.log.info('recvMsg can\'t convert a dict')
                 self.exit()

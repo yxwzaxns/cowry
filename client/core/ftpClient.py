@@ -3,7 +3,7 @@ from core.baseSocket import BaseSocket
 from core.upload import Upload
 from core.download import Download
 from core.config import Settings
-from core.utils import *
+from core import utils
 
 class Signal(QObject):
     # def __init__(self):
@@ -51,25 +51,26 @@ class FTPClient(BaseSocket):
             return (0, 'Logout Successd')
         else:
             return (1, self.recvInfo['reason'])
+        self.clearCert()
 
     def reconnect(self):
         self.logout()
 
     def upload(self, filepath, pbar):
-        filename = getBaseNameByPath(filepath)
-        filesize = getSizeByPath(filepath)
-        fileHashCode = calculateHashCodeForFile(filepath)
+        filename = utils.getBaseNameByPath(filepath)
+        filesize = utils.getSizeByPath(filepath)
+        fileHashCode = utils.calculateHashCodeForFile(filepath)
         self.pbar = pbar
 
         self.log.info('upload file md5 is :{}'.format(fileHashCode))
         uploadCmdCode = {'info': "upload", "code": "", "filename": filename, "filesize": filesize, "hash": fileHashCode }
         uploadInfo = self.sendMsg(uploadCmdCode)
         if uploadInfo[0] == 1:
-            sys.log.info(uploadInfo[1])
+            self.log.info(uploadInfo[1])
         else:
             retInfo = self.recvMsg()
             if retInfo[0] == 1:
-                return (1, recvInfo[1])
+                return (1, retInfo[1])
             elif self.recvInfo['status'] == '0':
                 uploadAuthCode = self.recvInfo['token']
                 remoteDataInfo = self.recvInfo['dataAddress']
@@ -99,11 +100,11 @@ class FTPClient(BaseSocket):
         downloadCmdCode = {'info': 'download', 'code': '', 'filename': downloadFileInfo['filename']}
         retInfo = self.sendMsg(downloadCmdCode)
         if retInfo[0] == 1:
-            sys.log.info(retInfo[1])
+            self.log.info(retInfo[1])
         else:
             retInfo = self.recvMsg()
             if retInfo[0] == 1:
-                return (1, recvInfo[1])
+                return (1, retInfo[1])
             elif self.recvInfo['status'] == '0':
                 downloadAuthCode = self.recvInfo['token']
                 remoteDataInfo = self.recvInfo['dataAddress']

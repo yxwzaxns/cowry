@@ -10,7 +10,7 @@ class Download(threading.Thread, BaseSocket):
         threading.Thread.__init__(self)
         self.fileInfo = fileinfo
         self.authtoken = authtoken
-        self.downloadFilePath = joinFilePath(self.settings['STORAGE']['Datapath'], self.fileInfo.hashcode)
+        self.downloadFilePath = joinFilePath(self.settings.storage.datapath, self.fileInfo.hashcode)
 
         self.createSslSock()
 
@@ -20,7 +20,14 @@ class Download(threading.Thread, BaseSocket):
             if recvInfo[0] == 1:
                 self.log.info("can't recv download action info : {}".format(recvInfo[1]))
                 self.close()
-            elif self.recvInfo:
+            elif recvInfo[0] == 2:
+                self.log.info('client was disconnected')
+                self.close()
+            elif recvInfo[0] == 3:
+                self.log.info('can\'t analyze client command.')
+                self.close()
+
+            if self.recvInfo:
                 self.log.info('Received  download request cmd code : {}'.format(self.recvInfo))
                 cmd = self.recvInfo['info']
                 try:

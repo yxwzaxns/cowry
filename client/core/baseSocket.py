@@ -1,7 +1,7 @@
 import socket, ssl
 from core.config import Settings
 from core.syslog import Syslog
-from core.utils import *
+from core import utils
 
 
 # from utils import *
@@ -10,35 +10,34 @@ class BaseSocket(object):
     """docstring for Client."""
     def __init__(self, **arg):
         super(BaseSocket, self).__init__()
+        self.msgCode = ('login','logout','refresh','list','get','put')
+        self.userName = None
+        self.passWord = None
+        self.host = None
+        self.port = None
+
+        self.sslContext = None
+
+        self.SEND_BUFFER_SIZE = 1024
+
+        self.ctrlSock = None
+        self.ctrlSockPort = None
+
+        self.dataSock = None
+        self.dataSockPort = None
+
+        self.recvInfo = None
+        self.lastCmd = None
+        self.lastCmdCode = None
+        self.certInfo = None
+
         if arg:
             self.__dict__.update(arg)
+
         self.log = Syslog()
         self.settings = Settings()
-        self.save_remote_cert()
         self.createSslConttext()
         self.createConnection()
-
-
-    msgCode = ('login','logout','refresh','list','get','put')
-    userName = 'admin'
-    passWord = 'admin888'
-    host = '127.0.0.1'
-    port = 2333
-
-    sslContext = ''
-
-    SEND_BUFFER_SIZE = 1024
-
-    ctrlSock = ''
-    ctrlSockPort = ''
-
-    dataSock = ''
-    dataSockPort = ''
-
-    recvInfo = None
-    lastCmd = ''
-    lastCmdCode = ''
-    certInfo = ''
 
     def createConnection(self):
         self.log.info('start createConnection')
@@ -55,31 +54,38 @@ class BaseSocket(object):
 
     def createSslConttext(self):
         self.sslContext = ssl.create_default_context()
+        certFileName = "{}.crt".format(self.host)
+        certFilePath = utils.joinFilePath(self.settings.certificates.certdirs, certFileName)
+
+        if not utils.checkFileExists(certFilePath):
+            self.acquire_remote_cert()
+
         try:
-            self.sslContext.load_verify_locations(self.settings.certificates.certificate)
+            self.sslContext.load_verify_locations(certFilePath)
         except Exception as e:
             self.log.error(str(e))
 
     def createDataSock(self):
         self.dataSock = self.ctrlSock
 
-    def save_remote_cert(self):
-        if not checkFileExists(self.settings.certificates.certificate):
-            self.log.info('start acquire remote host cert')
-            try:
-                cert = ssl.get_server_certificate((self.host, self.port))
-            except Exception as e:
-                self.log.info('can\' t load remote certificate :{}'.format(str(e)))
-                return (1, str(e))
-            try:
-                with open(self.settings.certificates.certificate, 'w') as f:
-                    f.write(cert)
-            except Exception as e:
-                self.log.info('can\' t save remote certificate on local :{}'.format(str(e)))
-                return (1, str(e))
-            else:
-                self.log.info('load and save remote server cert successd')
-                return (0, 'ok')
+    def acquire_remote_cert(self):
+        self.log.info('start acquire remote host cert')
+        try:
+            cert = ssl.get_server_certificate((self.host, self.port))
+        except Exception as e:
+            self.log.info('can\' t load remote certificate :{}'.format(str(e)))
+            return (1, str(e))
+        certFileName = "{}.crt".format(self.host)
+        certFilePath = utils.joinFilePath(self.settings.certificates.certdirs, certFileName)
+        try:
+            with open(certFilePath, 'w') as f:
+                f.write(cert)
+        except Exception as e:
+            self.log.info('can\' t save remote certificate on local :{}'.format(str(e)))
+            return (1, str(e))
+        else:
+            self.log.info('load and save remote server cert successd')
+            return (0, 'ok')
 
     def sendFile(self):
         with open(self.filepath, 'rb') as f:
@@ -113,7 +119,7 @@ class BaseSocket(object):
             f.write(recvfile)
             self.signal.recv.emit(0)
         # self.log.info('save size:{}/ file size:{}'.format(os.path.getsize(self.saveFilePath), self.downloadFileInfo['size']))
-        if calculateHashCodeForFile(self.saveFilePath) == self.fileHashCode:
+        if utils.calculateHashCodeForFile(self.saveFilePath) == self.fileHashCode:
             # self.sslDataSock.send(b'0') # recv finished
             self.log.info('download file finished')
             return (0, 'ok')
@@ -131,7 +137,7 @@ class BaseSocket(object):
 
     def setupCmdCode(func):
         def wrapper(self, msg):
-            self.lastCmdCode = str(generateRandomDigitFromRange(10000, 99999))
+            self.lastCmdCode = str(utils.generateRandomDigitFromRange(10000, 99999))
             # print('*********** send msg len is :{},type is {}, info is {}'.format(len(msg),type(msg),msg))
             msg['code'] = self.lastCmdCode
             return func(self, msg)
@@ -166,7 +172,7 @@ class BaseSocket(object):
         except Exception as e:
             return (1, str(e))
         else:
-            self.recvInfo = rebuildDictFromBytes(recvInfo)
+            self.recvInfo = utils.rebuildDictFromBytes(recvInfo)
             self.log.info('recv info {}'.format(recvInfo.strip()))
             return (0, "ok")
 

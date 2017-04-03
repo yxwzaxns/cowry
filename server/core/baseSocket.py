@@ -58,12 +58,13 @@ class BaseSocket(object):
             return (1, str(e))
         else:
             if len(info_tmp) == 0:
-                self.log.info('recv a null info')
+                self.log.info('recv a null info, close client connecting')
                 return (2, 'a null info')
             else:
                 try:
                     self.recvInfo = utils.rebuildDictFromBytes(info_tmp)
                 except Exception as e:
+                    self.log.info('error info : {}'.format(info_tmp))
                     return (3, str(e))
                 else:
                     return (0, "ok")

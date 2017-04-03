@@ -1,44 +1,76 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMainWindow, QMessageBox,QFileDialog,QProgressBar,QWidget
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QProgressBar, QWidget
 from PyQt5 import QtWidgets
-from core.ftpClient import FTPClient
 from resources.mainwindow import Ui_MainWindow
 from resources.upload import Ui_UploadFileDialog
 from resources.download import Ui_DownloadFileDialog
+from core.ftpClient import FTPClient
+from core.config import Settings
 from core.syslog import Syslog
-from core.utils import *
+from core import utils
 
 class Action_MainWindow(QMainWindow, Ui_MainWindow):
     """docstring for Action_MainWindow."""
-
-    client = None
-    loginStatus = False
-
     def __init__(self):
         QMainWindow.__init__(self)
         self.setupUi(self)
         self.Setdefaultinfo.triggered.connect(self.setdefaultinfo)
         self.Setlist.triggered.connect(self.setlist)
         self.Download_2.triggered.connect(self.test)
-        self.log = Syslog()
+
+        self.client = None
+        self.loginStatus = False
+        self.upload_dialog = None
+        self.download_dialog = None
         # self.Infolist.scrollToBottom()
 
     def start(self):
+        self.init_configure()
+        self.init_folder()
+        self.init_log()
         self.show()
+
+    def init_configure(self):
+        """Pass."""
+        # self.log.info('start init configure file')
+        if not utils.checkFileExists(utils.getenv('COWRY_CONFIG')):
+            src = utils.joinFilePath(utils.getenv('COWRY_ROOT'), 'cowry.conf.default')
+            dst = utils.joinFilePath(utils.getenv('COWRY_ROOT'), 'cowry.conf')
+            utils.copyfile(src, dst)
+            print('Not find default configure file, copy default configure to use')
+
+        self.settings = Settings()
+
+        # set default certificates folders values
+        if not self.settings.certificates.certdirs:
+            setDefaultCertDirs = utils.joinFilePath(utils.getenv('COWRY_ROOT'), 'certs')
+            self.settings._set(('certificates', 'certdirs', setDefaultCertDirs))
+
+    def init_folder(self):
+        # create upload folders
+        if not utils.checkFolderExists(self.settings.certificates.certdirs):
+            try:
+                utils.makeDirs(self.settings.certificates.certdirs)
+            except Exception as e:
+                self.log.error('certs folder create error : {}'.format(str(e)))
+
+    def init_log(self):
+        self.log = Syslog()
 
     def getinfo(self):
         # QtWidgets.QMessageBox.information(self.pushButton,"标题","这是第一个PyQt5 GUI程序")
-       msg = QtWidgets.QMessageBox()
-       msg.setIcon(QtWidgets.QMessageBox.Information)
+        msg = QtWidgets.QMessageBox()
+        msg.setIcon(QtWidgets.QMessageBox.Information)
 
-       msg.setText("This is a message box")
-       msg.setInformativeText("This is additional information")
-       msg.setWindowTitle("MessageBox demo")
-       msg.setDetailedText("The details are as follows:")
-       msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        msg.setText("This is a message box")
+        msg.setInformativeText("This is additional information")
+        msg.setWindowTitle("MessageBox demo")
+        msg.setDetailedText("The details are as follows:")
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
 
-       retval = msg.exec_()
-    #    print("value of pressed message box button:", retval)
+        retval = msg.exec_()
+        self.log.info("value of pressed message box button: {}".format(retval))
+
     def auth(func):
         def wrapper(self):
             if self.loginStatus != True:
@@ -49,19 +81,18 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
         return wrapper
 
     def quit(self):
-        reply = QMessageBox.question(self, 'Message',
-            "Are you sure to quit?", QMessageBox.Yes |
-            QMessageBox.No, QMessageBox.No)
+        reply = QMessageBox.question(self, 'Message', "Are you sure to quit?",
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-            if self.loginStatus == True:
+            if self.loginStatus is True:
                 self.logout()
             self.close()
         else:
             print("2333")
 
     def login(self):
-        if self.loginStatus == True:
+        if self.loginStatus is True:
             self.logout()
         self.Filetree.clear()
         vhost = str(self.Host.text().strip())
@@ -72,9 +103,10 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
             self.Infolist.addItem('please input connecting info')
         else:
             try:
-                self.client = FTPClient(host = vhost, port = vport, username = vusername, password = vpassword)
+                self.client = FTPClient(host=vhost, port=vport,
+                                        username=vusername, password=vpassword)
             except Exception as e:
-                raise
+                self.log.error(e)
             self.client.signal.refresh.connect(self.refresh)
             loginInfo = self.client.login()
             if loginInfo[0] == 0:
@@ -101,7 +133,7 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
     def reconnect(self):
         self.log.info('start reconnect')
         self.Filetree.clear()
-        if self.loginStatus == True:
+        if self.loginStatus is True:
             self.logout()
         self.login()
         self.Infolist.scrollToBottom()
@@ -110,13 +142,13 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
     def upload(self):
 
         try:
-            retInfo = QFileDialog.getOpenFileName(self, 'Open upload file', os.path.expanduser('~'))
+            retInfo = QFileDialog.getOpenFileName(self, 'Open upload file', utils.getUserHome())
         except Exception as e:
-            raise
+            self.log.info(e)
 
         if retInfo[0]:
             filepath = retInfo[0]
-            filename = getBaseNameByPath(filepath)
+            filename = utils.getBaseNameByPath(filepath)
             self.log.info('prepare  file :{}'.format(filepath))
 
             self.upload_dialog = QtWidgets.QDialog()
@@ -145,7 +177,9 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
             downloadFileInfo = {}
             for i in range(4):
                 downloadFileInfo[filesInfo[i]] = selectFiles[0].text(i)
-            downloadFileName = str().join((downloadFileInfo['filename'], '.', downloadFileInfo['profix']))
+            downloadFileName = str().join((downloadFileInfo['filename'],
+                                           '.',
+                                           downloadFileInfo['profix']))
             try:
                 retInfo = QFileDialog.getSaveFileName(self, 'Save download file', downloadFileName)
             except Exception as e:
@@ -162,7 +196,9 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
                 self.download_dialog.ui.Progress.setValue(0)
                 self.download_dialog.show()
 
-                retInfo = self.client.download(downloadFileInfo, downloadFilePath, self.download_dialog)
+                retInfo = self.client.download(downloadFileInfo,
+                                               downloadFilePath,
+                                               self.download_dialog)
                 if retInfo[0] == 0:
                     self.Infolist.addItem('file download successd')
                 else:
@@ -176,9 +212,11 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
         # fileList = self.client.list('/')
         if listInfo[0] == 0:
             fileList = QtWidgets.QTreeWidgetItem([" /"])
-            if listInfo[1] and type(listInfo[1]) is list:
+            if listInfo[1] and isinstance(listInfo[1], list):
                 for file in listInfo[1]:
-                    fileItem = QtWidgets.QTreeWidgetItem([file['name'], file['postfix'][1:], prettySize(file['size']), file['updatetime']])
+                    fileItem = QtWidgets.QTreeWidgetItem([file['name'], file['postfix'][1:],
+                                                          utils.prettySize(file['size']),
+                                                          file['updatetime']])
                     fileList.addChild(fileItem)
             self.Filetree.addTopLevelItem(fileList)
             self.Filetree.expandToDepth(0)

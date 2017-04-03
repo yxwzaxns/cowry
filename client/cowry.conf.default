@@ -1,0 +1,5 @@
+[DEFAULT]
+debug = True
+
+[CERTIFICATES]
+certdirs = 

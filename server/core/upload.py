@@ -21,7 +21,14 @@ class Upload(threading.Thread, BaseSocket):
             if recvInfo[0] == 1:
                 self.log.info("can't upload info : {}".format(recvInfo[1]))
                 self.close()
-            elif self.recvInfo:
+            elif recvInfo[0] == 2:
+                self.log.info('client was disconnected')
+                self.close()
+            elif recvInfo[0] == 3:
+                self.log.info('can\'t analyze client command.')
+                self.close()
+
+            if self.recvInfo:
                 self.log.info('Received cmd code : {}'.format(self.recvInfo))
                 cmd = self.recvInfo['info']
                 try:
