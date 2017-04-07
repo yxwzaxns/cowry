@@ -70,3 +70,21 @@ class Db(object):
 
     def close(self):
         self.session.close()
+# the following functions is used to select, update, delete, insert
+# and they will return a type of dict result
+    # select * from table
+    #          ||
+    # session.query(file).filter(file.name=='name').first()
+    #
+    # select(file,(name='name'[,]))
+    def select(self, table, ):
+        pass
+
+    def update(self, arg):
+        pass
+
+    def delate(self, arg):
+        pass
+
+    def insert(self, arg):
+        pass

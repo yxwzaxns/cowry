@@ -6,7 +6,7 @@ from core.download import Download
 from db import schema
 from sqlalchemy import and_
 from core.config import Settings
-from core.utils import *
+from core import utils
 
 
 class Worker(threading.Thread, BaseSocket):
@@ -38,7 +38,8 @@ class Worker(threading.Thread, BaseSocket):
             elif recvInfo[0] == 3:
                 self.log.info('recvMsg can\'t convert a dict')
                 self.exit()
-            elif self.recvInfo:
+
+            if self.recvInfo:
                 self.log.info('Received cmd code : {}'.format(self.recvInfo))
                 cmd = self.recvInfo['info']
                 try:
@@ -61,16 +62,29 @@ class Worker(threading.Thread, BaseSocket):
     @auth
     def upload(self):
         # recv info code {'info': "upload", "code": "", "filename": filename, "filesize": filesize, "hash": fileHashCode }
-        uploadFileHashCode = self.recvInfo['hash']
-        uploadFileName, postfix = seperateFileName(self.recvInfo['filename'])
-        uploadFileSize = self.recvInfo['filesize']
-        currentTime = getCurrentTime()
+        uploadFileInfo = self.recvInfo
+        fileHashCode = uploadFileInfo['hash']
+        fileName, postfix = utils.seperateFileName(uploadFileInfo['filename'])
+        fileSize = uploadFileInfo['filesize']
+        currentTime = utils.getCurrentTime()
+
+        encryption = uploadFileInfo['encryption']
+        encryption_type = uploadFileInfo['encryption_type']
+        encsize = uploadFileInfo['encsize']
         # to do
         # to determeine whether have repeat value in db
         try:
-            self.session.add(self.file(uid= self.userid, name= uploadFileName, size= uploadFileSize, hashcode= uploadFileHashCode,updatetime= currentTime, postfix= postfix))
+            self.session.add(self.file(uid= self.userid,
+                                       name= fileName,
+                                       size= fileSize,
+                                       encryption= encryption,
+                                       encryption_type= encryption_type,
+                                       encsize= encsize,
+                                       hashcode= fileHashCode,
+                                       updatetime= currentTime,
+                                       postfix= postfix))
         except Exception as e:
-            remsg = {'info': 'upload', 'code': self.recvInfo['code'], 'status': '1', 'reason': str(e)}
+            remsg = {'info': 'upload', 'code': uploadFileInfo['code'], 'status': '1', 'reason': str(e)}
             self.sendMsg(remsg)
 
         retInfo = self.createDataSock() #return (int, port)
@@ -78,13 +92,17 @@ class Worker(threading.Thread, BaseSocket):
             self.log.info('createDataSock fails: {}'.format(retInfo[1]))
 
         data_channel_info = (self.settings.certificates.cn, retInfo[1])
-        authToken = generateAuthToken()
-        remsg = {'info': 'upload', 'code': self.recvInfo['code'], 'status': '0', 'token': authToken, 'dataAddress': data_channel_info}
+        authToken = utils.generateAuthToken()
+        remsg = {'info': 'upload', 'code': uploadFileInfo['code'], 'status': '0', 'token': authToken, 'dataAddress': data_channel_info}
         retInfo = self.sendMsg(remsg)
         if retInfo[0] == 1:
             self.log.info('sendMsg fails: {}'.format(retInfo[1]))
         else:
-            self.uploadProcess = Upload(self.sslContext, self.dataSocket, uploadFileHashCode, uploadFileSize, authToken)
+            if uploadFileInfo['encryption'] == '1':
+                uploadFileSize = uploadFileInfo['encsize']
+            else:
+                uploadFileSize = uploadFileInfo['filesize']
+            self.uploadProcess = Upload(self.sslContext, self.dataSocket, fileHashCode, uploadFileSize, authToken)
             self.uploadProcess.start()
 
     @auth
@@ -99,12 +117,13 @@ class Worker(threading.Thread, BaseSocket):
         # recv info code {'info': 'download', 'code': '', 'filename': downloadFileName}
 
         downloadFileName = self.recvInfo['filename']
+        baseFileName, postfix = utils.seperateFileName(downloadFileName)
         # downloadFileSize = self.recvInfo['filesize']
         # currentTime = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
         # to do
         # to determeine whether have repeat value in db
         try:
-            fileInfo = self.session.query(self.file).filter(and_(self.file.uid == self.userid, self.file.name == downloadFileName)).first()
+            fileInfo = self.session.query(self.file).filter(and_(self.file.uid == self.userid, self.file.name == baseFileName, self.file.postfix == postfix)).first()
             # self.session.add(self.file(uid= self.userid, name= downloadFileName, size= downloadFileSize, hashcode= downloadFileHashCode,updatetime= currentTime, postfix= postfix))
         except Exception as e:
             remsg = {'info': 'download', 'code': self.recvInfo['code'], 'status': '1', 'reason': str(e)}
@@ -116,13 +135,16 @@ class Worker(threading.Thread, BaseSocket):
                     self.log.info('createDataSock fails: {}'.format(retInfo[1]))
 
                 data_channel_info = (self.settings.certificates.cn, retInfo[1])
-                authToken = generateAuthToken()
-                remsg = {'info': 'download', 'code': self.recvInfo['code'], 'status': '0', 'token': authToken, 'dataAddress': data_channel_info, 'hashcode': fileInfo.hashcode, 'size': fileInfo.size}
+                authToken = utils.generateAuthToken()
+                fileInfo = fileInfo.__dict__
+                del fileInfo['_sa_instance_state']
+                remsg = {'info': 'download', 'code': self.recvInfo['code'], 'status': '0', 'token': authToken, 'dataAddress': data_channel_info, 'fileinfo': fileInfo}
                 retInfo = self.sendMsg(remsg)
                 if retInfo[0] == 1:
                     self.log.info('sendMsg fails: {}'.format(retInfo[1]))
                 else:
-                    self.downloadProcess = Download(self.sslContext, self.dataSocket, fileInfo, authToken)
+                    downloadFilePath = utils.joinFilePath(self.settings.storage.datapath, fileInfo['hashcode'])
+                    self.downloadProcess = Download(self.sslContext, self.dataSocket, downloadFilePath, authToken)
                     self.downloadProcess.start()
 
     @auth
@@ -142,7 +164,7 @@ class Worker(threading.Thread, BaseSocket):
 
     def login(self):
         res = self.session.query(self.user).filter_by(username= self.recvInfo['u']).first()
-        if res and res.password == calculateHashCodeForString(self.recvInfo['p']):
+        if res and res.password == utils.calculateHashCodeForString(self.recvInfo['p']):
             self.username = res.username
             self.userid = res.id
             self.loginStatus = True

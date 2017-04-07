@@ -116,8 +116,11 @@ class Server():
 
     def init_status(self):
         """Pass."""
-        self.systemStatus = Status()
-        self.systemStatus.start()
+        if utils.getenv('COWRY_STATUS') != 'NO':
+            self.systemStatus = Status()
+            self.systemStatus.start()
+        else:
+            self.log.info('Start system without echo status of system.')
 
     # def init_db(self):
     #     self.log.info('start init server db')

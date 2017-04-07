@@ -1,8 +1,8 @@
+import threading
 from PyQt5.QtCore import pyqtSignal, QObject
 from PyQt5 import QtWidgets
-import threading
 from core.baseSocket import BaseSocket
-from core.utils import *
+from core import utils
 
 
 class UploadSignal(QObject):
@@ -12,13 +12,14 @@ class UploadSignal(QObject):
 
 class Upload(threading.Thread, BaseSocket):
     """docstring for Upload."""
+
     def __init__(self, remote, filepath, authtoken):
-        BaseSocket.__init__(self, host = remote[0], port = remote[1])
+        BaseSocket.__init__(self, host=remote[0], port=remote[1])
         threading.Thread.__init__(self)
         # UploadSignal.__init__(self)
         self.signal = UploadSignal()
         self.filepath = filepath
-        self.filename = getBaseNameByPath(self.filepath)
+        self.filename = utils.getBaseNameByPath(self.filepath)
         self.authtoken = authtoken
         self.step = 0
 
@@ -37,7 +38,7 @@ class Upload(threading.Thread, BaseSocket):
             self.lastCmdCode = '23333'
             self.log.info('start upload file : {}'.format(self.filepath))
 
-            startNewThread(self.sendFile)
+            utils.startNewThread(self.sendFile)
 
             # self.sendFile()
             self.drawProgress()
@@ -47,12 +48,14 @@ class Upload(threading.Thread, BaseSocket):
                 self.log.info(retInfo[1])
             elif self.recvInfo['status'] == '0':
                 self.log.info('upload completed')
+                # delete temp file
+                utils.deleteFile(self.filepath)
             else:
                 self.log.info(self.recvInfo['reason'])
             exit()
 
     def drawProgress(self):
-        filesize = getSizeByPath(self.filepath)
+        filesize = utils.getSizeByPath(self.filepath)
         info = self.recvMark()
         count = 0
         while True:

@@ -100,11 +100,14 @@ class BaseSocket(object):
                 self.clientSocket.send(b'1') # receiving file
             recvfile = self.clientSocket.recv(extend)
             f.write(recvfile)
-        if utils.getSizeByPath(self.uploadFilePath) == self.fileSize:
+
+        calculateFileSize = utils.getSizeByPath(self.uploadFilePath)
+        if calculateFileSize == self.fileSize:
             self.clientSocket.send(b'0') # recv finished
             self.log.info('upload finished')
             return (0, 'ok')
         else:
+            self.log.info('recved file size is :{}, upload file size is {}'.format(calculateFileSize, self.fileSize))
             self.clientSocket.send(b'2') # size not match
             return (1, 'size not match')
 

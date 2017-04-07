@@ -11,6 +11,7 @@ parser.add_argument("-d", "--drop", help="stop cowry server and \
                     delete all data of server include database and user files", action="store_true")
 parser.add_argument("-v", "--version", help="show version of cowry server", action="store_true")
 parser.add_argument("-c", "--config", help="declare config path where cowry system will read from")
+parser.add_argument("-q", "--quiet", help="don't echo system status", action="store_true")
 args = parser.parse_args()
 
 if __name__ == '__main__':
@@ -32,6 +33,11 @@ if __name__ == '__main__':
 
     if args.drop:
         cmd = 'drop'
+
+    if args.quiet:
+        utils.setenv('COWRY_STATUS', 'NO')
+    else:
+        utils.setenv('COWRY_STATUS', 'YES')
 
     server = Server()
     getattr(server, cmd)()
