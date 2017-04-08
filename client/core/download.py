@@ -65,7 +65,7 @@ class Download(threading.Thread, BaseSocket):
                                          mode=self.decrypt_info['encryption_type'])
             if retInfo[0] == 0:
                 utils.deleteFile(self.saveFilePath)
-                
+
     def drawProgress(self, p):
         if p == 0:
             # start deal with upload progress bar

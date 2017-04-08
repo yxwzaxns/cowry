@@ -145,8 +145,8 @@ class FTPClient(BaseSocket):
                 remoteDataInfo = self.recvInfo['dataAddress']
                 fileHashCode = self.recvInfo['fileinfo']['hashcode']
 
-                if decryption_type != None:
-                    saveFilePath = utils.joinFilePath('/tmp/', filename + 'enc')
+                if decryption_type != 'None':
+                    saveFilePath = utils.joinFilePath('/tmp/', filename + '.enc')
                     fileSize = self.recvInfo['fileinfo']['encsize']
                     decryptInfo = {
                         "encryption_type": self.encryption_type,

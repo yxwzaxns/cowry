@@ -6,7 +6,7 @@ import hashlib
 from Crypto.Cipher import AES
 from core.syslog import Syslog
 
-AES_CBC = "encrypt_file_with_aes_cbc"
+AES_CBC = "aes_cbc"
 DES_CBC = ""
 
 C_TYPE = {
@@ -30,7 +30,7 @@ class Cryptogram(object):
     def encrypt(self, key, filepath, mode=AES_CBC):
         self.log.info('prepare encrypt file : {} \nuse mode is :{} \n, Cipher is :{} '.format(filepath, mode, key))
         try:
-            encrypt_with_mode = getattr(self, C_TYPE[mode]['F'])
+            encrypt_with_mode = getattr(self, 'encrypt_file_with_' + C_TYPE[mode]['F'])
         except Exception as e:
             raise
         else:
@@ -41,7 +41,7 @@ class Cryptogram(object):
     def decrypt(self, key, filepath, savefilepath, mode=AES_CBC):
         self.log.info('prepare decrypt file : {} \nuse mode is :{} \n, Cipher is :{} '.format(filepath, mode, key))
         try:
-            decrypt_with_mode = getattr(self, C_TYPE[mode]['F'])
+            decrypt_with_mode = getattr(self, 'decrypt_file_with_' + C_TYPE[mode]['F'])
         except Exception as e:
             raise
         else:
@@ -104,7 +104,7 @@ class Cryptogram(object):
         return (0, enc_filepath)
 
     @staticmethod
-    def decrypt_file_with_des_cbc(key, in_filename, out_filename=None, chunksize=24*1024):
+    def decrypt_file_with_aes_cbc(key, in_filename, out_filename=None, chunksize=24*1024):
         # """ Decrypts a file using AES (CBC mode) with the
         #     given key. Parameters are similar to encrypt_file,
         #     with one difference: out_filename, if not supplied
@@ -132,4 +132,4 @@ class Cryptogram(object):
 
                 outfile.truncate(origsize)
         # dec_filepath = os.path.abspath(out_filename)
-        return (0,"ok")
+        return (0, "ok")

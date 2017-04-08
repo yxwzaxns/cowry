@@ -63,7 +63,7 @@ class BaseSocket(object):
             else:
                 self.log.info('send file Successd')
             finally:
-                self.log.info('total send size is :{:.2f} M'.format(sendSize / 1024))
+                self.log.info('total send size is :{:.2f} K'.format(sendSize / 1024))
 
     def recvMsg(self):
         try:

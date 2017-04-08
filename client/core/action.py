@@ -92,7 +92,7 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
             self.Usepassword.hide()
             self.Button_encrypt.hide()
 
-            self.client.encrypt = False
+            self.client.encryption = False
             self.Infolist.addItem("Close Local Files Model Of Encryption")
         else:
             self.Ciphercode.show()

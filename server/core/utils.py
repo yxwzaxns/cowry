@@ -128,7 +128,8 @@ def makeDirs(filepath):
 
 def delfolder(folderpath):
     """pass."""
-    shutil.rmtree(folderpath)
+    if checkFolderExists(folderpath):
+        shutil.rmtree(folderpath)
 
 def checkFileExists(filepath):
     """pass."""

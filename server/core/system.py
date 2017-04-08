@@ -214,7 +214,7 @@ class Server():
         utils.delfolder(utils.getDirNameByPath(self.settings.certificates.privatekey))
         # delete all database tables
         self.init_db()
-        self.db.drop()
+        self.db.drop()  
         # delete all database file if use sqlite
         if self.settings.database.df:
             utils.deleteFile(self.settings.database.df)
