@@ -7,6 +7,7 @@ from core.database import Db
 from core.status import Status
 from core.syslog import Syslog
 from core.config import Settings
+from core.console import WebConsole
 from core.encrypt import SSLCertSetting
 from core import utils
 
@@ -122,9 +123,11 @@ class Server():
         else:
             self.log.info('Start system without echo status of system.')
 
-    # def init_db(self):
-    #     self.log.info('start init server db')
-    #     self.db.initDB()
+    def init_web_console(self):
+        self.log.info('start init server web console')
+        if utils.getenv('COWRY_WEB_CONSOLE') == 'YES':
+            self.webConsole = WebConsole(self.db.Session)
+            self.webConsole.start()
 
     def init_ssl(self):
         self.ssl = SSLCertSetting()
@@ -187,6 +190,7 @@ class Server():
         self.init_ssl()
         self.init_socket()
         self.init_setenv()
+        self.init_web_console()
         self.init_status()
         self.log.info('start run server')
         while True:
@@ -214,7 +218,7 @@ class Server():
         utils.delfolder(utils.getDirNameByPath(self.settings.certificates.privatekey))
         # delete all database tables
         self.init_db()
-        self.db.drop()  
+        self.db.drop()
         # delete all database file if use sqlite
         if self.settings.database.df:
             utils.deleteFile(self.settings.database.df)

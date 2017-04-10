@@ -12,6 +12,7 @@ parser.add_argument("-d", "--drop", help="stop cowry server and \
 parser.add_argument("-v", "--version", help="show version of cowry server", action="store_true")
 parser.add_argument("-c", "--config", help="declare config path where cowry system will read from")
 parser.add_argument("-q", "--quiet", help="don't echo system status", action="store_true")
+parser.add_argument("-w", "--webconsole", help="open cowry console of web", action="store_true")
 args = parser.parse_args()
 
 if __name__ == '__main__':
@@ -38,6 +39,11 @@ if __name__ == '__main__':
         utils.setenv('COWRY_STATUS', 'NO')
     else:
         utils.setenv('COWRY_STATUS', 'YES')
+
+    if args.webconsole:
+        utils.setenv('COWRY_WEB_CONSOLE', 'YES')
+    else:
+        utils.setenv('COWRY_WEB_CONSOLE', 'NO')
 
     server = Server()
     getattr(server, cmd)()
