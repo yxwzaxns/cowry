@@ -101,14 +101,15 @@ class Server():
             except Exception as e:
                 self.log.error('cert folder create : {}'.format(str(e)))
         # create database folders if system use sqlite
-        db_dir_name = utils.getDirNameByPath(self.settings.database.df)
-        if not utils.checkFolderExists(db_dir_name):
-            utils.makeDirs(db_dir_name)
-        if not utils.checkFolderExists(db_dir_name):
-            try:
+        if self.settings.database.type == 'sqlite':
+            db_dir_name = utils.getDirNameByPath(self.settings.database.df)
+            if not utils.checkFolderExists(db_dir_name):
                 utils.makeDirs(db_dir_name)
-            except Exception as e:
-                self.log.error('db folder create : {}'.format(str(e)))
+            if not utils.checkFolderExists(db_dir_name):
+                try:
+                    utils.makeDirs(db_dir_name)
+                except Exception as e:
+                    self.log.error('db folder create : {}'.format(str(e)))
 
     def init_log(self):
         """Pass."""
