@@ -5,7 +5,7 @@ from service import app, schema, d
 
 @app.route('/')
 def index():
-    return redirect('/login')
+    return render_template('index.html')
 
 def valid_login(e, p):
     user = d.session.query(schema.manager.Manager).filter(schema.manager.Manager.email==e).first()

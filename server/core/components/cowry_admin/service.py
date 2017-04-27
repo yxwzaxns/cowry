@@ -5,10 +5,12 @@ from raven.contrib.flask import Sentry
 from flask_login import LoginManager
 import redis
 
-r = redis.StrictRedis(host='localhost', port=6379, db=0)
+# r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
-os.sys.path.append(r.get('cowry_root').decode())
+# os.sys.path.append(r.get('cowry_root').decode())
 from db import schema
+from core.config import Settings
+from core import utils
 
 PROJECT_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -17,7 +19,8 @@ app = Flask('cowry_admin',
             static_url_path='/static',
             template_folder='views')
 
-app.config['SQLALCHEMY_DATABASE_URI'] = r.get('cowry_db_uri').decode()
+app.settings = Settings()
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///{}'.format(app.settings.database.df)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.debug = True
 app.config['SECRET_KEY'] = 'super-secret'

@@ -1,5 +1,77 @@
 {% extends 'admin/master.html' %}
 
 {% block body %}
-  <p>Hello world</p>
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <p class="navbar-text">
+      {% if current_user.is_authenticated %}
+        Hi {{ current_user.username }}
+      {% endif %}
+    </p>
+    <div class="navbar-header navbar-right">
+      <a class="navbar-brand" href="/logout">
+        <img alt="Brand" src='/static/images/logout.png'>
+      </a>
+    </div>
+  </div>
+</nav>
+<!-- <div class="container"> -->
+  <div class="cow">
+    <div class="col-md-3">
+      <div class="panel panel-info">
+        <div class="panel-heading">Status Panel</div>
+        <div class="panel-body">
+          <ul class="list-group">
+            <li class="list-group-item">
+              <span class="badge">1</span>
+              Current Online Users
+            </li>
+            <li class="list-group-item">
+              <span class="badge">1</span>
+              Current Upload Files
+            </li>
+            <li class="list-group-item">
+              <span class="badge">1</span>
+              Current Download Files
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="panel panel-success">
+        <div class="panel-heading">System Status Panel</div>
+        <div class="panel-body">
+          <ul class="list-group">
+            <li class="list-group-item">
+              <span class="badge">0M</span>
+              Upload File Size
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="panel panel-danger">
+        <div class="panel-heading">Warning Status Panel</div>
+        <div class="panel-body">
+          <ul class="list-group">
+            <li class="list-group-item">
+              <span class="badge">0</span>
+              Abnormal Login
+            </li>
+            <li class="list-group-item">
+              <span class="badge">0</span>
+              Failed To Download Files
+            </li>
+            <li class="list-group-item">
+              <span class="badge">0</span>
+              Failed To Upload Files
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+<!-- </div> -->
 {% endblock %}

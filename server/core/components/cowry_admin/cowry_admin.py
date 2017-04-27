@@ -10,6 +10,7 @@ from flask_admin import expose
 from flask_login import current_user, login_required
 
 import routes
+import api
 
 
 class DbView(ModelView):

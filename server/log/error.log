@@ -1,0 +1,127 @@
+[2017-04-28 00:25:08 +0800] [13093] [INFO] Starting gunicorn 19.7.1
+[2017-04-28 00:25:08 +0800] [13093] [INFO] Listening at: http://0.0.0.0:8000 (13093)
+[2017-04-28 00:25:08 +0800] [13093] [INFO] Using worker: gevent
+[2017-04-28 00:25:08 +0800] [13096] [INFO] Booting worker with pid: 13096
+[2017-04-28 00:25:09 +0800] [13096] [ERROR] Exception in worker process
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/arbiter.py", line 578, in spawn_worker
+    worker.init_process()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/workers/ggevent.py", line 190, in init_process
+    super(GeventWorker, self).init_process()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/workers/base.py", line 126, in init_process
+    self.load_wsgi()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/workers/base.py", line 135, in load_wsgi
+    self.wsgi = self.app.wsgi()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/app/base.py", line 67, in wsgi
+    self.callable = self.load()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/app/wsgiapp.py", line 65, in load
+    return self.load_wsgiapp()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/app/wsgiapp.py", line 52, in load_wsgiapp
+    return util.import_app(self.app_uri)
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/util.py", line 352, in import_app
+    __import__(module)
+  File "/Users/aong/workspace/git/cowry/server/core/components/cowry_admin/cowry_admin.py", line 1, in <module>
+    from service import app, schema, d
+  File "/Users/aong/workspace/git/cowry/server/core/components/cowry_admin/service.py", line 20, in <module>
+    app.config['SQLALCHEMY_DATABASE_URI'] = r.get('cowry_db_uri').decode()
+AttributeError: 'NoneType' object has no attribute 'decode'
+[2017-04-28 00:25:09 +0800] [13096] [INFO] Worker exiting (pid: 13096)
+[2017-04-28 00:25:09 +0800] [13093] [INFO] Shutting down: Master
+[2017-04-28 00:25:09 +0800] [13093] [INFO] Reason: Worker failed to boot.
+[2017-04-28 00:25:17 +0800] [13098] [INFO] Starting gunicorn 19.7.1
+[2017-04-28 00:25:17 +0800] [13098] [INFO] Listening at: http://0.0.0.0:8000 (13098)
+[2017-04-28 00:25:17 +0800] [13098] [INFO] Using worker: gevent
+[2017-04-28 00:25:17 +0800] [13101] [INFO] Booting worker with pid: 13101
+[2017-04-28 00:25:18 +0800] [13101] [ERROR] Exception in worker process
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/arbiter.py", line 578, in spawn_worker
+    worker.init_process()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/workers/ggevent.py", line 190, in init_process
+    super(GeventWorker, self).init_process()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/workers/base.py", line 126, in init_process
+    self.load_wsgi()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/workers/base.py", line 135, in load_wsgi
+    self.wsgi = self.app.wsgi()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/app/base.py", line 67, in wsgi
+    self.callable = self.load()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/app/wsgiapp.py", line 65, in load
+    return self.load_wsgiapp()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/app/wsgiapp.py", line 52, in load_wsgiapp
+    return util.import_app(self.app_uri)
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/util.py", line 352, in import_app
+    __import__(module)
+  File "/Users/aong/workspace/git/cowry/server/core/components/cowry_admin/cowry_admin.py", line 1, in <module>
+    from service import app, schema, d
+  File "/Users/aong/workspace/git/cowry/server/core/components/cowry_admin/service.py", line 20, in <module>
+    app.config['SQLALCHEMY_DATABASE_URI'] = r.get('cowry_db_uri').decode()
+AttributeError: 'NoneType' object has no attribute 'decode'
+[2017-04-28 00:25:18 +0800] [13101] [INFO] Worker exiting (pid: 13101)
+[2017-04-28 00:25:18 +0800] [13098] [INFO] Shutting down: Master
+[2017-04-28 00:25:18 +0800] [13098] [INFO] Reason: Worker failed to boot.
+[2017-04-28 00:29:31 +0800] [13120] [INFO] Starting gunicorn 19.7.1
+[2017-04-28 00:29:31 +0800] [13120] [INFO] Listening at: http://0.0.0.0:8000 (13120)
+[2017-04-28 00:29:31 +0800] [13120] [INFO] Using worker: gevent
+[2017-04-28 00:29:31 +0800] [13123] [INFO] Booting worker with pid: 13123
+[2017-04-28 00:29:32 +0800] [13123] [ERROR] Exception in worker process
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/arbiter.py", line 578, in spawn_worker
+    worker.init_process()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/workers/ggevent.py", line 190, in init_process
+    super(GeventWorker, self).init_process()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/workers/base.py", line 126, in init_process
+    self.load_wsgi()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/workers/base.py", line 135, in load_wsgi
+    self.wsgi = self.app.wsgi()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/app/base.py", line 67, in wsgi
+    self.callable = self.load()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/app/wsgiapp.py", line 65, in load
+    return self.load_wsgiapp()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/app/wsgiapp.py", line 52, in load_wsgiapp
+    return util.import_app(self.app_uri)
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/util.py", line 352, in import_app
+    __import__(module)
+  File "/Users/aong/workspace/git/cowry/server/core/components/cowry_admin/cowry_admin.py", line 1, in <module>
+    from service import app, schema, d
+  File "/Users/aong/workspace/git/cowry/server/core/components/cowry_admin/service.py", line 20, in <module>
+    app.config['SQLALCHEMY_DATABASE_URI'] = r.get('cowry_db_uri').decode()
+NameError: name 'r' is not defined
+[2017-04-28 00:29:32 +0800] [13123] [INFO] Worker exiting (pid: 13123)
+[2017-04-28 00:29:32 +0800] [13120] [INFO] Shutting down: Master
+[2017-04-28 00:29:32 +0800] [13120] [INFO] Reason: Worker failed to boot.
+[2017-04-28 00:33:03 +0800] [13135] [INFO] Starting gunicorn 19.7.1
+[2017-04-28 00:33:03 +0800] [13135] [INFO] Listening at: http://0.0.0.0:8000 (13135)
+[2017-04-28 00:33:03 +0800] [13135] [INFO] Using worker: gevent
+[2017-04-28 00:33:03 +0800] [13138] [INFO] Booting worker with pid: 13138
+[2017-04-28 00:33:03 +0800] [13138] [ERROR] Exception in worker process
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/arbiter.py", line 578, in spawn_worker
+    worker.init_process()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/workers/ggevent.py", line 190, in init_process
+    super(GeventWorker, self).init_process()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/workers/base.py", line 126, in init_process
+    self.load_wsgi()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/workers/base.py", line 135, in load_wsgi
+    self.wsgi = self.app.wsgi()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/app/base.py", line 67, in wsgi
+    self.callable = self.load()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/app/wsgiapp.py", line 65, in load
+    return self.load_wsgiapp()
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/app/wsgiapp.py", line 52, in load_wsgiapp
+    return util.import_app(self.app_uri)
+  File "/usr/local/lib/python3.6/site-packages/gunicorn/util.py", line 352, in import_app
+    __import__(module)
+  File "/Users/aong/workspace/git/cowry/server/core/components/cowry_admin/cowry_admin.py", line 1, in <module>
+    from service import app, schema, d
+  File "/Users/aong/workspace/git/cowry/server/core/components/cowry_admin/service.py", line 23, in <module>
+    app.config['SQLALCHEMY_DATABASE_URI'] = r.get('cowry_db_uri').decode()
+NameError: name 'r' is not defined
+[2017-04-28 00:33:03 +0800] [13138] [INFO] Worker exiting (pid: 13138)
+[2017-04-28 00:33:03 +0800] [13135] [INFO] Shutting down: Master
+[2017-04-28 00:33:03 +0800] [13135] [INFO] Reason: Worker failed to boot.
+[2017-04-28 00:37:44 +0800] [13150] [INFO] Starting gunicorn 19.7.1
+[2017-04-28 00:37:44 +0800] [13150] [INFO] Listening at: http://0.0.0.0:8000 (13150)
+[2017-04-28 00:37:44 +0800] [13150] [INFO] Using worker: gevent
+[2017-04-28 00:37:44 +0800] [13153] [INFO] Booting worker with pid: 13153
+[2017-04-28 00:38:04 +0800] [13150] [INFO] Handling signal: int
+[2017-04-28 00:38:04 +0800] [13153] [INFO] Worker exiting (pid: 13153)
+[2017-04-28 00:38:04 +0800] [13150] [INFO] Shutting down: Master
