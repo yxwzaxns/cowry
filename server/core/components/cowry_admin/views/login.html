@@ -1,0 +1,94 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <!-- <link rel="icon" href="../../favicon.ico"> -->
+
+    <title>Signin Template for Bootstrap</title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+
+    <!-- Custom styles for this template -->
+    <link href="static/css/login/signin.css" rel="stylesheet">
+    <style media="screen">
+    #particle {
+      /*background-color: #b61924;*/
+      position:fixed;
+      top:0;
+      right:0;
+      bottom:0;
+      left:0;
+      z-index:0;
+    }
+    #overlay {
+      position: relative;
+    }
+    </style>
+  </head>
+
+  <body>
+    <div id="particle"></div>
+    <div id="overlay">
+      <div class="container">
+      <form class="form-signin" action="/login" method="post">
+        <h2 class="form-signin-heading">Please sign in</h2>
+        <label for="inputEmail" class="sr-only">Email address</label>
+        <input type="email" id="inputEmail" class="form-control" placeholder="Email address" name="email" required autofocus>
+        <label for="inputPassword" class="sr-only">Password</label>
+        <input type="password" id="inputPassword" class="form-control" placeholder="Password" name="password" required>
+        <label style="color:red">
+          {% if error %}
+            Notes: {{ error }}!
+          {% endif %}
+        </label>
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" value="remember-me"> Remember me
+          </label>
+        </div>
+        <button class="btn btn-lg btn-primary btn-block" id='login' type="submit">Sign in</button>
+      </form>
+    </div>
+  </div> <!-- /container -->
+
+    <script src="static/js/jquery.js" charset="utf-8"></script>
+    <script src="static/js/login/particles.js"></script>
+    <script type="text/javascript">
+      /* particlesJS.load(@dom-id, @path-json, @callback (optional)); */
+      particlesJS.load('particle', 'static/js/login/particles.json', function() {
+        console.log('callback - particles.js config loaded');
+      });
+      // {
+      //   $('#login').click(function () {
+      //     data = {
+      //       "username": $('#inputEmail').val(),
+      //       "password": $('#inputPassword').val()
+      //     }
+      //     $.ajax({
+      //       type: "POST",
+      //       url: '/auth',
+      //       headers: {
+      //         "Content-Type": 'application/json'
+      //       },
+      //       data: JSON.stringify(data),
+      //       success: function (res) {
+      //         console.log(res.access_token)
+      //         window.localStorage.token = res.access_token
+      //         location.href = '/welcome'
+      //       },
+      //       // dataType: 'json'
+      //     });
+      //     return false
+      //   })
+      // }
+
+    </script>
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+  </body>
+</html>

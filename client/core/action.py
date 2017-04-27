@@ -14,9 +14,8 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
         self.setupUi(self)
-        self.Setdefaultinfo.triggered.connect(self.setdefaultinfo)
-        self.Setlist.triggered.connect(self.setlist)
-        self.Download_2.triggered.connect(self.test)
+        # self.Setlist.triggered.connect(self.setlist)
+        # self.Download_2.triggered.connect(self.test)
 
         self.client = None
         self.loginStatus = False
@@ -28,6 +27,8 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
         self.init_configure()
         self.init_folder()
         self.init_log()
+        self.init_signal()
+        self.init_ui_setting()
         self.show()
 
     def init_configure(self):
@@ -57,6 +58,58 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
     def init_log(self):
         self.log = Syslog()
 
+    def init_signal(self):
+        self.actionloadLoginInfo.triggered.connect(self.setdefaultinfo)
+        self.actiondeleteCertificate.triggered.connect(self.deleteCerts)
+
+        self.Encrypts.currentIndexChanged.connect(self.setEncryptStatus)
+        self.Usepassword.clicked.connect(self.setCiphercode)
+
+    def init_ui_setting(self):
+        if self.Encrypts.currentText() == 'None':
+            self.Ciphercode.hide()
+            self.Label_cipher.hide()
+            self.Usepassword.hide()
+            self.Button_encrypt.hide()
+        self.Ciphercode.setEnabled(False)
+        self.Ciphercode.setText(self.Password.text())
+        self.Usepassword.setChecked(True)
+
+    def auth(func):
+        def wrapper(self):
+            if self.loginStatus != True:
+                self.Infolist.addItem('please login system !!!')
+            else:
+                func(self)
+            self.Infolist.scrollToBottom()
+        return wrapper
+
+    @auth
+    def setEncryptStatus(self):
+        if self.Encrypts.currentText() == 'None':
+            self.Ciphercode.hide()
+            self.Label_cipher.hide()
+            self.Usepassword.hide()
+            self.Button_encrypt.hide()
+
+            self.client.encryption = False
+            self.Infolist.addItem("Close Local Files Model Of Encryption")
+        else:
+            self.Ciphercode.show()
+            self.Label_cipher.show()
+            self.Usepassword.show()
+            self.Button_encrypt.show()
+        self.setCiphercode()
+
+    @auth
+    def setCiphercode(self):
+        if self.Usepassword.isChecked():
+            self.Ciphercode.setEnabled(False)
+            self.Ciphercode.setText(self.Password.text())
+        else:
+            self.Ciphercode.setText('')
+            self.Ciphercode.setEnabled(True)
+
     def getinfo(self):
         # QtWidgets.QMessageBox.information(self.pushButton,"标题","这是第一个PyQt5 GUI程序")
         msg = QtWidgets.QMessageBox()
@@ -70,15 +123,6 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
 
         retval = msg.exec_()
         self.log.info("value of pressed message box button: {}".format(retval))
-
-    def auth(func):
-        def wrapper(self):
-            if self.loginStatus != True:
-                self.Infolist.addItem('please login system !!!')
-            else:
-                func(self)
-            self.Infolist.scrollToBottom()
-        return wrapper
 
     def quit(self):
         reply = QMessageBox.question(self, 'Message', "Are you sure to quit?",
@@ -159,7 +203,8 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
             self.upload_dialog.ui.Progress.setValue(0)
             self.upload_dialog.show()
 
-            retInfo = self.client.upload(filepath, self.upload_dialog)
+            self.client.upbar = self.upload_dialog
+            retInfo = self.client.upload(filepath)
             if retInfo[0] == 0:
                 self.Infolist.addItem('file upload successd')
             else:
@@ -171,38 +216,45 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
         if not selectFiles:
             self.Infolist.addItem('Please select file')
         else:
-            filesInfo = ('filename', 'profix', 'size', 'uploadtime')
             # self.log.info('selected file is : {}'.format(selectFiles)
             # self.log.info('index : {}'.format(self.Filetree.selectedIndexes()))
             downloadFileInfo = {}
-            for i in range(4):
-                downloadFileInfo[filesInfo[i]] = selectFiles[0].text(i)
+            downloadFileInfo['filename'] = selectFiles[0].text(0)
+            downloadFileInfo['postfix'] = selectFiles[0].text(1)
+            downloadFileInfo['encryption_type'] = selectFiles[0].text(3)
+
             downloadFileName = str().join((downloadFileInfo['filename'],
                                            '.',
-                                           downloadFileInfo['profix']))
-            try:
-                retInfo = QFileDialog.getSaveFileName(self, 'Save download file', downloadFileName)
-            except Exception as e:
-                raise
-            if retInfo[0]:
-                downloadFilePath = retInfo[0]
-            #     # filename = os.path.basename(filepath)
-                self.log.info('start draw download progress GUI')
-                self.download_dialog = QtWidgets.QDialog()
-                self.download_dialog.ui = Ui_DownloadFileDialog()
-                self.download_dialog.comfirm = self.client.downloadComfirm
-                self.download_dialog.ui.setupUi(self.download_dialog)
-                self.download_dialog.ui.Filename.setText(downloadFileName)
-                self.download_dialog.ui.Progress.setValue(0)
-                self.download_dialog.show()
+                                           downloadFileInfo['postfix']))
+            # check the download file whether need to decrypt
+            # if not, alert info of open encryption option
+            if downloadFileInfo['encryption_type'] != 'None' and not self.client.encryption:
+                self.Infolist.addItem('The file to be downloaded has been encrypted, you must open encrypt option!')
+            else:
+                try:
+                    retInfo = QFileDialog.getSaveFileName(self, 'Save download file', downloadFileName)
+                except Exception as e:
+                    raise
+                if retInfo[0]:
+                    downloadFilePath = retInfo[0]
+                #     # filename = os.path.basename(filepath)
+                    self.log.info('start draw download progress GUI')
+                    self.download_dialog = QtWidgets.QDialog()
+                    self.download_dialog.ui = Ui_DownloadFileDialog()
+                    self.download_dialog.comfirm = self.client.downloadComfirm
+                    self.download_dialog.ui.setupUi(self.download_dialog)
+                    self.download_dialog.ui.Filename.setText(downloadFileName)
+                    self.download_dialog.ui.Progress.setValue(0)
+                    self.download_dialog.show()
 
-                retInfo = self.client.download(downloadFileInfo,
-                                               downloadFilePath,
-                                               self.download_dialog)
-                if retInfo[0] == 0:
-                    self.Infolist.addItem('file download successd')
-                else:
-                    self.Infolist.addItem(retInfo[1])
+                    self.client.dpbar = self.download_dialog
+                    retInfo = self.client.download(downloadFileName,
+                                                   downloadFilePath,
+                                                   decryption_type= downloadFileInfo['encryption_type'])
+                    if retInfo[0] == 0:
+                        self.Infolist.addItem('file download successd')
+                    else:
+                        self.Infolist.addItem(retInfo[1])
 
     @auth
     def refresh(self):
@@ -214,8 +266,13 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
             fileList = QtWidgets.QTreeWidgetItem([" /"])
             if listInfo[1] and isinstance(listInfo[1], list):
                 for file in listInfo[1]:
+                    if file['encryption'] == '1':
+                        encryption = file['encryption_type']
+                    else:
+                        encryption = 'None'
                     fileItem = QtWidgets.QTreeWidgetItem([file['name'], file['postfix'][1:],
                                                           utils.prettySize(file['size']),
+                                                          encryption,
                                                           file['updatetime']])
                     fileList.addChild(fileItem)
             self.Filetree.addTopLevelItem(fileList)
@@ -224,6 +281,14 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
         else:
             self.Infolist.addItem(str(listInfo[1]))
 
+    @auth
+    def encrypt(self):
+        # if self.Usepassword.clicked():
+        #     self.log.info('current select item is : {}'.format(self.Encrypts.currentText()))
+        self.client.encryption = True
+        self.client.encryption_type = str(self.Encrypts.currentText().strip())
+        self.client.encryption_cipher = str(self.Ciphercode.text().strip())
+        self.Infolist.addItem("Open Local Files Model Of Encryption")
 
     def keyPressEvent(self, e):
 
@@ -235,6 +300,10 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
         self.Port.setText('2333')
         self.Username.setText('aong')
         self.Password.setText('1234')
+
+    def deleteCerts(self):
+        if utils.delFilesFromFolder(self.settings.certificates.certdirs):
+            self.Infolist.addItem("Delete All Certificates In System Successd.")
 
     def setlist(self):
         self.step += 1

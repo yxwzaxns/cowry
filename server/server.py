@@ -1,5 +1,4 @@
 """cowry server sources."""
-
 import os
 import argparse
 from core.system import Server
@@ -11,10 +10,14 @@ parser.add_argument("-d", "--drop", help="stop cowry server and \
                     delete all data of server include database and user files", action="store_true")
 parser.add_argument("-v", "--version", help="show version of cowry server", action="store_true")
 parser.add_argument("-c", "--config", help="declare config path where cowry system will read from")
+parser.add_argument("-q", "--quiet", help="don't echo system status", action="store_true")
+parser.add_argument("-w", "--webconsole", help="open cowry console of web", action="store_true")
 args = parser.parse_args()
 
 if __name__ == '__main__':
-    utils.addAppPath('.')
+    # currentPath = os.path.dirname(os.path.realpath(__file__))
+    # utils.setenv('COWRY_ROOT', currentPath)
+    # utils.addAppPath(currentPath)
     cmd = 'start'
 
     if args.config:
@@ -22,7 +25,7 @@ if __name__ == '__main__':
         if utils.checkFileExists(defaultConfigPath):
             utils.setenv('COWRY_CONFIG', defaultConfigPath)
     else:
-        currentPath = utils.getCwd()
+        currentPath = os.path.dirname(os.path.realpath(__file__))
         utils.setenv('COWRY_ROOT', currentPath)
         defaultConfigPath = utils.joinFilePath(currentPath, 'cowry.conf')
         utils.setenv('COWRY_CONFIG', defaultConfigPath)
@@ -32,6 +35,16 @@ if __name__ == '__main__':
 
     if args.drop:
         cmd = 'drop'
+
+    if args.quiet:
+        utils.setenv('COWRY_STATUS', 'NO')
+    else:
+        utils.setenv('COWRY_STATUS', 'YES')
+
+    if args.webconsole:
+        utils.setenv('COWRY_WEB_CONSOLE', 'YES')
+    else:
+        utils.setenv('COWRY_WEB_CONSOLE', 'NO')
 
     server = Server()
     getattr(server, cmd)()

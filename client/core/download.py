@@ -1,10 +1,13 @@
+import threading
 from PyQt5.QtCore import pyqtSignal, QObject
 from PyQt5 import QtWidgets
-import threading
 from core.baseSocket import BaseSocket
-from core.utils import *
+from core.cryptogram import Cryptogram
+from core import utils
 
 class DownloadSignal(QObject):
+    """DownloadSignal."""
+
     # def __init__(self):
     #     super(UploadSignal, self).__init__()
     p = pyqtSignal(tuple)
@@ -12,17 +15,20 @@ class DownloadSignal(QObject):
 
 class Download(threading.Thread, BaseSocket):
     """docstring for Upload."""
-    def __init__(self, remote, downloadfileinfo, savefilepath, authtoken, filehashcode, filesize):
-        BaseSocket.__init__(self, host = remote[0], port = remote[1])
+
+    def __init__(self, remote, savefilepath, authtoken, filehashcode, filesize, decrypt_info=None):
+        BaseSocket.__init__(self, host=remote[0], port=remote[1])
         threading.Thread.__init__(self)
         # UploadSignal.__init__(self)
         self.createDataSock()
         self.signal = DownloadSignal()
         self.saveFilePath = savefilepath
-        self.downloadFileInfo = downloadfileinfo
         self.authtoken = authtoken
         self.fileHashCode = filehashcode
         self.fileSize = filesize
+
+        self.crypt = Cryptogram()
+        self.decrypt_info = decrypt_info
         self.step = 0
 
         # signal connect
@@ -41,14 +47,24 @@ class Download(threading.Thread, BaseSocket):
             self.close()
         elif self.recvInfo['status'] == '0':
             self.lastCmdCode = '23333'
-            self.log.info('start download file : {}'.format(self.downloadFileInfo['filename']))
+            # self.log.info('start download file : {}'.format(self.downloadFileInfo['filename']))
 
             retInfo = self.recvFile()
             if retInfo[0] == 1:
                 self.log.info(retInfo[1])
             else:
+                self.decryptFile()
                 self.log.info(retInfo[1])
-            exit()
+
+    def decryptFile(self):
+        if self.decrypt_info != None:
+            self.log.info('start decrypt file.....')
+            retInfo = self.crypt.decrypt(self.decrypt_info['cipher'],
+                                         self.saveFilePath,
+                                         savefilepath=self.decrypt_info['savefilepath'],
+                                         mode=self.decrypt_info['encryption_type'])
+            if retInfo[0] == 0:
+                utils.deleteFile(self.saveFilePath)
 
     def drawProgress(self, p):
         if p == 0:

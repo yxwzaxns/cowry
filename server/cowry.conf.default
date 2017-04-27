@@ -31,5 +31,14 @@ dbname = cowry
 charset = utf8
 df =
 
+[WEBCONSOLE]
+host = 127.0.0.1
+port = 3000
+
+[REDIS]
+host = 127.0.0.1
+port = 6379
+db = 0
+
 [STORAGE]
 datapath =

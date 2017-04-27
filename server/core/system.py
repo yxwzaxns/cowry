@@ -7,6 +7,7 @@ from core.database import Db
 from core.status import Status
 from core.syslog import Syslog
 from core.config import Settings
+from core.console import WebConsole
 from core.encrypt import SSLCertSetting
 from core import utils
 
@@ -117,12 +118,19 @@ class Server():
 
     def init_status(self):
         """Pass."""
-        self.systemStatus = Status()
-        self.systemStatus.start()
+        if utils.getenv('COWRY_STATUS') != 'NO':
+            self.systemStatus = Status()
+            self.systemStatus.start()
+        else:
+            self.log.info('Start system without echo status of system.')
 
-    # def init_db(self):
-    #     self.log.info('start init server db')
-    #     self.db.initDB()
+    def init_web_console(self):
+        # up redis
+        # set app root path into redis
+        if utils.getenv('COWRY_WEB_CONSOLE') == 'YES':
+            self.log.info('start init server web console')
+            WebConsole.start()
+
 
     def init_ssl(self):
         self.ssl = SSLCertSetting()
@@ -185,6 +193,7 @@ class Server():
         self.init_ssl()
         self.init_socket()
         self.init_setenv()
+        self.init_web_console()
         self.init_status()
         self.log.info('start run server')
         while True:

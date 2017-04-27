@@ -100,6 +100,7 @@ class BaseSocket(object):
 
     def recvFile(self):
         self.log.info('######## start recv file ########')
+        self.log.info('######## size of file is : {}########'.format(self.fileSize))
         loop = int(self.fileSize) // 1024
         extend = int(self.fileSize) % 1024
         with open(self.saveFilePath, 'wb') as f:

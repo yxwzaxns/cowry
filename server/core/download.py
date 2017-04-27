@@ -1,16 +1,16 @@
 import threading
 from core.baseSocket import BaseSocket
-from core.utils import *
+from core import utils
 
 class Download(threading.Thread, BaseSocket):
     """docstring for Upload."""
-    def __init__(self, sslContext, dataSock, fileinfo, authtoken):
+
+    def __init__(self, sslContext, dataSock, downloadfilepath, authtoken):
         # super(Upload, self).__init__()
-        BaseSocket.__init__(self, sslContext = sslContext, dataSock = dataSock)
+        BaseSocket.__init__(self, sslContext=sslContext, dataSock=dataSock)
         threading.Thread.__init__(self)
-        self.fileInfo = fileinfo
         self.authtoken = authtoken
-        self.downloadFilePath = joinFilePath(self.settings.storage.datapath, self.fileInfo.hashcode)
+        self.downloadFilePath = downloadfilepath
 
         self.createSslSock()
 
