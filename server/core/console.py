@@ -1,28 +1,30 @@
 import threading
-from core.config import Settings
-from core.syslog import Syslog
-from core.database import Db
-from flask import Flask
-from flask_admin import Admin
-from flask_admin.contrib.sqla import ModelView
+import subprocess, sys
+from core import utils
 
+# filename = utils.joinFilePath(utils.getenv('COWRY_ROOT'), 'core/components/cowry_admin/gunicorn_runner.py')
+# print(filename)
 
-app = Flask(__name__)
-db = Db()
-
-admin = Admin(app, name='Cowry Admin', template_mode='bootstrap3')
-
-@app.route('/')
-def index():
-    return redirect(url_for(''))
-
-class WebConsole(threading.Thread):
+# cmd = 'python3 {}'.format(filename)
+# completed = subprocess.Popen(cmd, shell=True)
+#
+# class WebConsole(threading.Thread):
+#     """docstring for WebConsole."""
+#     def __init__(self):
+#         super(WebConsole, self).__init__()
+#
+#     def run(self):
+#         gunicorn_runner.run_app()
+class WebConsole(object):
     """docstring for WebConsole."""
     def __init__(self):
         super(WebConsole, self).__init__()
+        self.settings = Settings()
 
-        # admin.add_view(ModelView(User, db.session))
-
-
-    def run(self):
-        app.run()
+    @staticmethod
+    def start():
+        filename = utils.joinFilePath(utils.getenv('COWRY_ROOT'), 'core/components/cowry_admin/gunicorn_runner.py')
+        configPath = utils.getenv('COWRY_CONFIG')
+        cmd = 'python3 {} {}'.format(filename, configPath)
+        completed = subprocess.Popen(cmd, shell=True)
+        # sys.exit()

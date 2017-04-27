@@ -1,3 +1,6 @@
 sqlalchemy
 pymysql
 pyOpenSSL
+flask
+flask-admin
+gunicorn

@@ -1,0 +1,51 @@
+import os, logging
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from raven.contrib.flask import Sentry
+from flask_login import LoginManager
+import redis
+
+r = redis.StrictRedis(host='localhost', port=6379, db=0)
+
+os.sys.path.append(r.get('cowry_root').decode())
+from db import schema
+
+PROJECT_PATH = os.path.dirname(os.path.realpath(__file__))
+
+app = Flask('cowry_admin',
+            static_folder='static',
+            static_url_path='/static',
+            template_folder='views')
+
+app.config['SQLALCHEMY_DATABASE_URI'] = r.get('cowry_db_uri').decode()
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.debug = True
+app.config['SECRET_KEY'] = 'super-secret'
+
+d = SQLAlchemy(app)
+# handler = logging.FileHandler(PROJECT_PATH + '/log/access.log')
+# handler.setLevel(logging.DEBUG)
+# # formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+# # handler.setFormatter(formatter)
+# app.logger.addHandler(handler)
+
+# @app.before_first_request
+# def setup_logging():
+#     if not app.debug:
+#         # In production mode, add log handler to sys.stderr.
+#         handler = logging.FileHandler(PROJECT_PATH + '/log/access.log')
+#         app.logger.root.setLevel(logging.DEBUG)
+#         app.logger.root.addHandler(handler)
+
+# DSN = 'https://1bc026bce05c42f58aef3a3cc1936293:156a035928b84b648ed1c0e139333c32@sentry.io/159731'
+# sentry = Sentry(app, dsn=DSN)
+login_manager = LoginManager()
+login_manager.login_view = 'login'
+login_manager.init_app(app)
+
+@login_manager.user_loader
+def load_user(user_id):
+    user = d.session.query(schema.manager.Manager).filter(schema.manager.Manager.id==user_id).first()
+    if user.id:
+        return user
+    return None

@@ -124,10 +124,12 @@ class Server():
             self.log.info('Start system without echo status of system.')
 
     def init_web_console(self):
-        self.log.info('start init server web console')
+        # up redis
+        # set app root path into redis
         if utils.getenv('COWRY_WEB_CONSOLE') == 'YES':
-            self.webConsole = WebConsole(self.db.Session)
-            self.webConsole.start()
+            self.log.info('start init server web console')
+            WebConsole.start()
+
 
     def init_ssl(self):
         self.ssl = SSLCertSetting()

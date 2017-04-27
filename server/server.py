@@ -1,5 +1,4 @@
 """cowry server sources."""
-
 import os
 import argparse
 from core.system import Server
@@ -16,7 +15,9 @@ parser.add_argument("-w", "--webconsole", help="open cowry console of web", acti
 args = parser.parse_args()
 
 if __name__ == '__main__':
-    utils.addAppPath('.')
+    # currentPath = os.path.dirname(os.path.realpath(__file__))
+    # utils.setenv('COWRY_ROOT', currentPath)
+    # utils.addAppPath(currentPath)
     cmd = 'start'
 
     if args.config:
@@ -24,7 +25,7 @@ if __name__ == '__main__':
         if utils.checkFileExists(defaultConfigPath):
             utils.setenv('COWRY_CONFIG', defaultConfigPath)
     else:
-        currentPath = utils.getCwd()
+        currentPath = os.path.dirname(os.path.realpath(__file__))
         utils.setenv('COWRY_ROOT', currentPath)
         defaultConfigPath = utils.joinFilePath(currentPath, 'cowry.conf')
         utils.setenv('COWRY_CONFIG', defaultConfigPath)
