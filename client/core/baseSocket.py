@@ -59,7 +59,6 @@ class BaseSocket(object):
 
         if not utils.checkFileExists(certFilePath):
             self.acquire_remote_cert()
-
         try:
             self.sslContext.load_verify_locations(certFilePath)
         except Exception as e:
