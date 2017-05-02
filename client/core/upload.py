@@ -48,8 +48,9 @@ class Upload(threading.Thread, BaseSocket):
                 self.log.info(retInfo[1])
             elif self.recvInfo['status'] == '0':
                 self.log.info('upload completed')
-                # delete temp file
-                utils.deleteFile(self.filepath)
+                if self.filepath[0:4] == '/tmp':
+                    # delete temp file
+                    utils.deleteFile(self.filepath)
             else:
                 self.log.info(self.recvInfo['reason'])
             exit()
