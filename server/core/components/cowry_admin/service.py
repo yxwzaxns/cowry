@@ -47,8 +47,12 @@ login_manager.login_view = 'login'
 login_manager.init_app(app)
 
 @login_manager.user_loader
-def load_user(user_id):
-    user = d.session.query(schema.manager.Manager).filter(schema.manager.Manager.id==user_id).first()
-    if user.id:
+def load_user(user_uuid):
+    print("uuid is :",user_uuid, 'end')
+    manager = d.session.query(schema.manager.Manager).filter(schema.manager.Manager.uuid==user_uuid).first()
+    user = d.session.query(schema.user.User).filter(schema.user.User.uuid==user_uuid).first()
+    if user:
         return user
+    elif manager:
+        return manager
     return None

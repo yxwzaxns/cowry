@@ -15,25 +15,27 @@ import api
 
 class DbView(ModelView):
     def is_accessible(self):
-        return current_user.is_authenticated
+        if hasattr(current_user, 'is_admin') and current_user.is_admin == 1:
+            return current_user.is_authenticated
     def inaccessible_callback(self, name, **kwargs):
         # redirect to login page if user doesn't have access
-        return redirect(url_for('login', next=request.url))
+        return redirect(url_for('login', next=request.url, type='manager'))
 
+class FilesModelView(DbView):
+    column_list = ('id', 'uid', 'postfix', 'encryption_type', 'encsize', 'updatetime', 'size', 'name', 'encryption', 'public', 'hashcode')
 
 class MyAdminIndexView(AdminIndexView):
     @expose('/')
     @login_required
     def index(self):
-        # if not current_user.is_authenticated:
-        #     return redirect('/login')
-        # return 'aaa'
+        if not hasattr(current_user, 'is_admin') or current_user.is_admin != 1:
+            return redirect(url_for('login', next=request.url, type='manager'))
         return super(MyAdminIndexView, self).index()
 
 admin = Admin(app, name='Cowry Admin Console', index_view=MyAdminIndexView(), template_mode='bootstrap3')
 admin.add_view(DbView(schema.manager.Manager, d.session))
 admin.add_view(DbView(schema.user.User, d.session))
-admin.add_view(DbView(schema.file.File, d.session))
+admin.add_view(FilesModelView(schema.file.File, d.session))
 admin.add_view(rediscli.RedisCli(Redis()))
 
 # path = op.join(op.dirname(__file__), 'static')

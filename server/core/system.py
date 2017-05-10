@@ -199,8 +199,12 @@ class Server():
         while True:
             (clientSocket, clientAddress) = self.serverSocket.accept()
             self.log.info("{}<=====>{}".format(clientSocket, clientAddress))
-            client = self.sslContext.wrap_socket(clientSocket, server_side=True)
-            self.createWorker(client, clientAddress)
+            try:
+                client = self.sslContext.wrap_socket(clientSocket, server_side=True)
+            except Exception as e:
+                self.log.info(str(e))
+            else:
+                self.createWorker(client, clientAddress)
 
     def drop(self):
         """Clear system info and delete all info of cowry."""

@@ -1,0 +1,89 @@
+{% extends "layout/base.html" %}
+{% block static %}
+<link href="/static/css/home/dash.css" rel="stylesheet">
+<script src="/static/js/home/index.js"></script>
+{% endblock %}
+{% block content %}
+<nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">User Panel</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">User Panel</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#">Dashboard</a></li>
+            <li><a href="#">Settings</a></li>
+            <li><a href="#">Profile</a></li>
+            <li><a href="/logout">Logout</a></li>
+          </ul>
+          <form class="navbar-form navbar-right">
+            <input type="text" class="form-control" placeholder="Search...">
+          </form>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar">
+          <ul class="nav nav-sidebar">
+            <li class="active"><a href="#">Overview <span class="sr-only">(current)</span></a></li>
+            <li><a href="#" id="dash">Dashboard</a></li>
+          </ul>
+          <ul class="nav nav-sidebar">
+            <li><a href="#" id="settings">Settings</a></li>
+          </ul>
+          <ul class="nav nav-sidebar">
+            <li><a href="#" id="profile">Profile</a></li>
+          </ul>
+        </div>
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+          <div class="dash current">
+            <h1 class="page-header">Dashboard</h1>
+
+            <h2 class="sub-header">Login History</h2>
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>IP</th>
+                    <th>Login-Time</th>
+                    <th>OS</th>
+                    <th>Header</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1,001</td>
+                    <td>Lorem</td>
+                    <td>ipsum</td>
+                    <td>dolor</td>
+                    <td>sit</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="settings" style="display: none;">
+            <form action="/home/settings" method="post">
+              <div class="form-group">
+                <label for="comment">RSA Public Key:</label>
+                <textarea class="form-control" rows="5" id="comment" name="pubkey">{{ current_user.pubkey }}</textarea>
+              </div>
+              <button type="button" id='save' class="btn btn-default save">Save</button>
+            </form>
+          </div>
+          <div class="profile" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+    <!-- settings -->
+
+{% endblock %}

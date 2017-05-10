@@ -1,94 +1,143 @@
-
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <!-- <link rel="icon" href="../../favicon.ico"> -->
-
-    <title>Signin Template for Bootstrap</title>
-
-    <!-- Bootstrap core CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
-
-    <!-- Custom styles for this template -->
-    <link href="static/css/login/signin.css" rel="stylesheet">
-    <style media="screen">
-    #particle {
-      /*background-color: #b61924;*/
-      position:fixed;
-      top:0;
-      right:0;
-      bottom:0;
-      left:0;
-      z-index:0;
-    }
-    #overlay {
-      position: relative;
-    }
-    </style>
-  </head>
-
-  <body>
-    <div id="particle"></div>
-    <div id="overlay">
-      <div class="container">
-      <form class="form-signin" action="/login" method="post">
-        <h2 class="form-signin-heading">Please sign in</h2>
-        <label for="inputEmail" class="sr-only">Email address</label>
-        <input type="email" id="inputEmail" class="form-control" placeholder="Email address" name="email" required autofocus>
-        <label for="inputPassword" class="sr-only">Password</label>
-        <input type="password" id="inputPassword" class="form-control" placeholder="Password" name="password" required>
-        <label style="color:red">
-          {% if error %}
-            Notes: {{ error }}!
-          {% endif %}
+{% extends "layout/base.html" %}
+{% block static %}
+<link href="/static/css/login/signin.css" rel="stylesheet">
+<script src="/static/js/login/login.js"></script>
+{% endblock %}
+{% block content %}
+<div id="particle"></div>
+<div id="overlay">
+  {% if type == 'manager' %}
+  <div class="container">
+    <form class="form-signin" action="/login" method="post">
+      <h2 class="form-signin-heading">Please sign in</h2>
+      <label for="inputEmail" class="sr-only">Email address</label>
+      <input type="email" id="inputEmail" class="form-control" placeholder="Email address" name="email" required autofocus>
+      <label for="inputPassword" class="sr-only">Password</label>
+      <input type="password" id="inputPassword" class="form-control" placeholder="Password" name="password" required>
+      <label style="color:red">
+        {% if error %}
+          Notes: {{ error }}!
+        {% endif %}
+      </label>
+      <div class="checkbox">
+        <label>
+          <input type="checkbox" value="remember-me"> Remember me
         </label>
-        <div class="checkbox">
-          <label>
-            <input type="checkbox" value="remember-me"> Remember me
-          </label>
-        </div>
-        <button class="btn btn-lg btn-primary btn-block" id='login' type="submit">Sign in</button>
-      </form>
-    </div>
-  </div> <!-- /container -->
+      </div>
+      <input type="hidden" name='type' value="{{ type }}">
+      <button class="btn btn-lg btn-primary btn-block" id='login' type="submit">Sign in</button>
+    </form>
+  </div>
+  {% else %}
+  <div class="container">
+	<div class="row">
+	<div class="col-md-6 col-md-offset-3">
+		<div class="panel panel-login">
+			<div class="panel-heading">
+				<div class="row">
+					<div class="col-xs-6">
+						<a href="#" class="active" id="login-form-link">Login</a>
+					</div>
+					<div class="col-xs-6">
+						<a href="#" id="register-form-link">Register</a>
+					</div>
+				</div>
+				<hr>
+			</div>
+			<div class="panel-body">
+				<div class="row">
+					<div class="col-lg-12">
+						<form id="login-form" action="/login" method="post" role="form" style="display: block;">
+              <input type="hidden" name='type' value="{{ type }}">
+              <div class="form-group">
+								<input type="text" name="email" id="username" tabindex="1" class="form-control" placeholder="Email" value="">
+							</div>
+							<div class="form-group">
+								<input type="password" name="password" id="password" tabindex="2" class="form-control" placeholder="Password">
+							</div>
+							<div class="form-group text-center">
+								<input type="checkbox" tabindex="3" class="" name="remember" id="remember">
+								<label for="remember"> Remember Me</label>
+							</div>
+							<div class="form-group">
+								<div class="row">
+									<div class="col-sm-6 col-sm-offset-3">
+										<input type="submit" name="login-submit" id="login-submit" tabindex="4" class="form-control btn btn-login" value="Log In">
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<div class="row">
+									<div class="col-lg-12">
+										<div class="text-center">
+											<a href="#" tabindex="5" class="forgot-password">Forgot Password?</a>
+										</div>
+									</div>
+								</div>
+							</div>
+						</form>
+						<form id="register-form" action="/register" method="post" role="form" style="display: none;">
+              <input type="hidden" name='type' value="{{ type }}">
+              <div class="form-group">
+								<input type="text" name="username" id="username" tabindex="1" class="form-control" placeholder="Username" value="">
+							</div>
+							<div class="form-group">
+								<input type="email" name="email" id="email" tabindex="1" class="form-control" placeholder="Email Address" value="">
+							</div>
+							<div class="form-group">
+								<input type="password" name="password" id="password" tabindex="2" class="form-control" placeholder="Password">
+							</div>
+							<div class="form-group">
+								<input type="password" name="confirm-password" id="confirm-password" tabindex="2" class="form-control" placeholder="Confirm Password">
+							</div>
+							<div class="form-group">
+								<div class="row">
+									<div class="col-sm-6 col-sm-offset-3">
+										<input type="submit" name="register-submit" id="register-submit" tabindex="4" class="form-control btn btn-register" value="Register Now">
+									</div>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</div>
+  {% endif %}
+</div> <!-- /container -->
 
-    <script src="static/js/jquery.js" charset="utf-8"></script>
-    <script src="static/js/login/particles.js"></script>
-    <script type="text/javascript">
-      /* particlesJS.load(@dom-id, @path-json, @callback (optional)); */
-      particlesJS.load('particle', 'static/js/login/particles.json', function() {
-        console.log('callback - particles.js config loaded');
-      });
-      // {
-      //   $('#login').click(function () {
-      //     data = {
-      //       "username": $('#inputEmail').val(),
-      //       "password": $('#inputPassword').val()
-      //     }
-      //     $.ajax({
-      //       type: "POST",
-      //       url: '/auth',
-      //       headers: {
-      //         "Content-Type": 'application/json'
-      //       },
-      //       data: JSON.stringify(data),
-      //       success: function (res) {
-      //         console.log(res.access_token)
-      //         window.localStorage.token = res.access_token
-      //         location.href = '/welcome'
-      //       },
-      //       // dataType: 'json'
-      //     });
-      //     return false
-      //   })
-      // }
+<script src="/static/js/jquery.js" charset="utf-8"></script>
+<script src="/static/js/login/particles.js"></script>
+<script type="text/javascript">
+  /* particlesJS.load(@dom-id, @path-json, @callback (optional)); */
+  particlesJS.load('particle', '/static/js/login/particles.json', function() {
+    console.log('callback - particles.js config loaded');
+  });
+  // {
+  //   $('#login').click(function () {
+  //     data = {
+  //       "username": $('#inputEmail').val(),
+  //       "password": $('#inputPassword').val()
+  //     }
+  //     $.ajax({
+  //       type: "POST",
+  //       url: '/auth',
+  //       headers: {
+  //         "Content-Type": 'application/json'
+  //       },
+  //       data: JSON.stringify(data),
+  //       success: function (res) {
+  //         console.log(res.access_token)
+  //         window.localStorage.token = res.access_token
+  //         location.href = '/welcome'
+  //       },
+  //       // dataType: 'json'
+  //     });
+  //     return false
+  //   })
+  // }
 
-    </script>
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-  </body>
-</html>
+</script>
+{% endblock %}

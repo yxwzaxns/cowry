@@ -24,6 +24,7 @@ class Upload(threading.Thread, BaseSocket):
         self.step = 0
 
     def run(self):
+        self.createConnection()
         authCmdCode = {'info': 'uploadAuth', 'code': '', 'authtoken': self.authtoken}
         retInfo = self.sendMsg(authCmdCode)
         if retInfo[0] == 1:

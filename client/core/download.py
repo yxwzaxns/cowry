@@ -35,6 +35,8 @@ class Download(threading.Thread, BaseSocket):
         self.signal.recv.connect(self.drawProgress)
 
     def run(self):
+        ret = self.createConnection()
+        self.log.info(ret)
         authCmdCode = {'info': 'downloadAuth', 'code': '', 'authtoken': self.authtoken}
         retInfo = self.sendMsg(authCmdCode)
         if retInfo[0] == 1:

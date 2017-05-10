@@ -1,5 +1,5 @@
+#!/usr/bin/env python3
 """cowry client sources."""
-
 import os
 import argparse
 import PyQt5

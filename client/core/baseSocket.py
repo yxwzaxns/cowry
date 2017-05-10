@@ -36,10 +36,9 @@ class BaseSocket(object):
 
         self.log = Syslog()
         self.settings = Settings()
-        self.createSslConttext()
-        self.createConnection()
 
     def createConnection(self):
+        self.createSslConttext()
         self.log.info('start createConnection')
         try:
             tmpSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -47,10 +46,11 @@ class BaseSocket(object):
             self.ctrlSock.connect((self.host, int(self.port)))
         except Exception as e:
             self.log.info(str(e))
-            # raise
+            return (1,str(e))
         else:
             self.certInfo = str(self.ctrlSock.cipher())
             self.log.info('connecting to remote host ...')
+            return (0,)
 
     def createSslConttext(self):
         self.sslContext = ssl.create_default_context()
@@ -63,6 +63,7 @@ class BaseSocket(object):
             self.sslContext.load_verify_locations(certFilePath)
         except Exception as e:
             self.log.error(str(e))
+            return (1,str(e))
 
     def createDataSock(self):
         self.dataSock = self.ctrlSock
@@ -105,7 +106,7 @@ class BaseSocket(object):
         with open(self.saveFilePath, 'wb') as f:
             recvedFileSize = 0
             for i in range(loop):
-                recvfile = self.dataSock.recv(1024)
+                recvfile = self.ctrlSock.recv(1024)
                 # self.log.info('receving data of file is : {:.2f}%'.format(recvedFileSize / filesize * 100))
                 f.write(recvfile)
                 self.log.info('start recv {} loop'.format(i))
@@ -114,17 +115,17 @@ class BaseSocket(object):
                 self.log.info('emit 1')
 
                 recvedFileSize += len(recvfile)
-                # self.dataSock.send(b'1') # receiving file
-            recvfile = self.dataSock.recv(extend)
+                # self.ctrlSock.send(b'1') # receiving file
+            recvfile = self.ctrlSock.recv(extend)
             f.write(recvfile)
             self.signal.recv.emit(0)
         # self.log.info('save size:{}/ file size:{}'.format(os.path.getsize(self.saveFilePath), self.downloadFileInfo['size']))
         if utils.calculateHashCodeForFile(self.saveFilePath) == self.fileHashCode:
-            # self.sslDataSock.send(b'0') # recv finished
+            # self.sslctrlSock.send(b'0') # recv finished
             self.log.info('download file finished')
             return (0, 'ok')
         else:
-            # self.sslDataSock.send(b'2') # size not match
+            # self.sslctrlSock.send(b'2') # size not match
             return (1, 'size not match')
 
     def checkCmdCode(func):
@@ -171,6 +172,8 @@ class BaseSocket(object):
         tmpRecvInfo = b''
         try:
             recvInfo = self.ctrlSock.recv(1024).strip()
+        except socket.timeout as e:
+            return (1, str(e))
         except Exception as e:
             return (1, str(e))
         tmpRecvInfo += recvInfo
