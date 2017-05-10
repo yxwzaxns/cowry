@@ -6,15 +6,22 @@ import gunicorn.glogging
 import gunicorn.workers.ggevent
 from gunicorn.app.wsgiapp import run
 
-import utils
 
-PROJECT_PATH = os.path.dirname(os.path.realpath(__file__))
+PROJECT_PATH = os.path.dirname(sys.argv[1])
+os.sys.path.append(PROJECT_PATH)
+
+from core import utils
+utils.setenv('COWRY_CONFIG', sys.argv[1])
+utils.setenv('COWRY_ROOT', PROJECT_PATH)
+
+from core.config import Settings
+settings = Settings()
 
 ERROR_LOG = utils.joinFilePath(PROJECT_PATH, 'log/error.log')
 ACCESS_LOG = utils.joinFilePath(PROJECT_PATH, 'log/access.log')
 
-HOST = '0.0.0.0'
-PORT = '8000'
+HOST = settings.webconsole.host
+PORT = settings.webconsole.port
 
 def number_of_workers():
     return (multiprocessing.cpu_count() * 2) + 1
@@ -47,13 +54,23 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 #     }
 #     StandaloneApplication(app, options).run()
 
-    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
-    sys.argv += ["-k", "gevent", "-w", "1",
-                 "--max-requests", "5000", "--max-requests-jitter", "5000",
-                 "--access-logfile", "{}".format(ACCESS_LOG),
-                 "--error-logfile", "{}".format(ERROR_LOG),
-                 '-b', '{}:{}'.format(HOST, PORT), 'cowry_admin:app']
+    # sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
+    sys.argv[0] = 'gunicorn'
+    del sys.argv[1]
+    if settings.default.debug == 'True':
+        sys.argv += ["-k", "gevent", "-w", "1",
+                     "--max-requests", "5000", "--max-requests-jitter", "5000",
+                     "--access-logfile", "-",
+                     "--error-logfile", "-",
+                     '-b', '{}:{}'.format(HOST, PORT), 'cowry_admin:app']
+    else:
+        sys.argv += ["-k", "gevent", "-w", "1",
+                     "--max-requests", "5000", "--max-requests-jitter", "5000",
+                     "--access-logfile", "{}".format(ACCESS_LOG),
+                     "--error-logfile", "{}".format(ERROR_LOG),
+                     '-b', '{}:{}'.format(HOST, PORT), 'cowry_admin:app']
 
+    # print(sys.argv)
     sys.exit(run())
 
 if __name__ == "__main__":

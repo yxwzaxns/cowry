@@ -5,10 +5,12 @@ from raven.contrib.flask import Sentry
 from flask_login import LoginManager
 import redis
 
-r = redis.StrictRedis(host='localhost', port=6379, db=0)
+# r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
-os.sys.path.append(r.get('cowry_root').decode())
+# os.sys.path.append(r.get('cowry_root').decode())
 from db import schema
+from core.config import Settings
+from core import utils
 
 PROJECT_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -17,7 +19,8 @@ app = Flask('cowry_admin',
             static_url_path='/static',
             template_folder='views')
 
-app.config['SQLALCHEMY_DATABASE_URI'] = r.get('cowry_db_uri').decode()
+app.settings = Settings()
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///{}'.format(app.settings.database.df)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.debug = True
 app.config['SECRET_KEY'] = 'super-secret'
@@ -44,8 +47,12 @@ login_manager.login_view = 'login'
 login_manager.init_app(app)
 
 @login_manager.user_loader
-def load_user(user_id):
-    user = d.session.query(schema.manager.Manager).filter(schema.manager.Manager.id==user_id).first()
-    if user.id:
+def load_user(user_uuid):
+    print("uuid is :",user_uuid, 'end')
+    manager = d.session.query(schema.manager.Manager).filter(schema.manager.Manager.uuid==user_uuid).first()
+    user = d.session.query(schema.user.User).filter(schema.user.User.uuid==user_uuid).first()
+    if user:
         return user
+    elif manager:
+        return manager
     return None

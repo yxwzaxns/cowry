@@ -87,6 +87,9 @@ def generateAuthToken():
     """pass."""
     return uuid.uuid4().hex.upper()
 
+def generateGUID():
+    return  uuid.uuid1().hex.upper()
+
 def getCurrentTime():
     """pass."""
     return time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())

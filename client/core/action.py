@@ -1,9 +1,11 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QProgressBar, QWidget
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QProgressBar, QWidget, QAction, QMenu
 from PyQt5 import QtWidgets
 from resources.mainwindow import Ui_MainWindow
 from resources.upload import Ui_UploadFileDialog
 from resources.download import Ui_DownloadFileDialog
+from resources.openfile import Ui_Open_File
+from resources.closefile import Ui_Close_File
 from core.ftpClient import FTPClient
 from core.config import Settings
 from core.syslog import Syslog
@@ -75,6 +77,9 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
         self.Ciphercode.setText(self.Password.text())
         self.Usepassword.setChecked(True)
 
+        self.Filetree_Public.header().resizeSection(2,0)
+        self.Filetree_Private.header().resizeSection(2,0)
+
     def auth(func):
         def wrapper(self):
             if self.loginStatus != True:
@@ -138,7 +143,7 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
     def login(self):
         if self.loginStatus is True:
             self.logout()
-        self.Filetree.clear()
+        self.Filetree_Private.clear()
         vhost = str(self.Host.text().strip())
         vport = int(str(self.Port.text().strip()) or '0')
         vusername = str(self.Username.text().strip())
@@ -146,37 +151,43 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
         if not vhost or not vport or not vusername or not vpassword:
             self.Infolist.addItem('please input connecting info')
         else:
-            try:
-                self.client = FTPClient(host=vhost, port=vport,
-                                        username=vusername, password=vpassword)
-            except Exception as e:
-                self.log.error(e)
-            self.client.signal.refresh.connect(self.refresh)
-            loginInfo = self.client.login()
-            if loginInfo[0] == 0:
-                self.Infolist.addItem(str(loginInfo[1]))
-                self.Infolist.addItem(str().join(('Encryption with : ', loginInfo[2][2:29])))
-                self.loginStatus = True
-                self.refresh()
+            self.client = FTPClient(host=vhost,
+                                    port=vport,
+                                    username=vusername,
+                                    password=vpassword)
+
+            ret = self.client.createConnection()
+            if ret[0] == 1:
+                self.Infolist.addItem(str(ret[1]))
+                self.Infolist.scrollToBottom()
             else:
-                # print(type(loginInfo),type(loginInfo[1]), loginInfo)
-                self.Infolist.addItem(loginInfo[1])
-                # self.client.close()
-        self.Infolist.scrollToBottom()
+                self.client.signal.refresh.connect(self.refresh)
+                loginInfo = self.client.login()
+                if loginInfo[0] == 0:
+                    self.Infolist.addItem(str(loginInfo[1]))
+                    self.Infolist.addItem(str().join(('Encryption with : ', loginInfo[2][2:29])))
+                    self.client.id = loginInfo[3]
+                    self.loginStatus = True
+                    self.refresh()
+                else:
+                    # print(type(loginInfo),type(loginInfo[1]), loginInfo)
+                    self.Infolist.addItem(loginInfo[1])
+                    # self.client.close()
+                    self.Infolist.scrollToBottom()
 
     @auth
     def logout(self):
         logoutInfo = self.client.logout()
         if logoutInfo[0] == 0:
             self.Infolist.addItem(logoutInfo[1])
-            self.Filetree.clear()
+            self.Filetree_Private.clear()
             self.loginStatus = False
         else:
             self.Infolist.addItem(logoutInfo[1])
 
     def reconnect(self):
         self.log.info('start reconnect')
-        self.Filetree.clear()
+        self.Filetree_Private.clear()
         if self.loginStatus is True:
             self.logout()
         self.login()
@@ -212,15 +223,20 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
 
     @auth
     def download(self):
-        selectFiles = self.Filetree.selectedItems()
+        if self.tabWidget.currentIndex() == 0:
+            selectFiles = self.Filetree_Private.selectedItems()
+        else:
+            selectFiles = self.Filetree_Public.selectedItems()
+        # currentTab = self.tabWidget.currentTabText
         if not selectFiles:
             self.Infolist.addItem('Please select file')
         else:
             # self.log.info('selected file is : {}'.format(selectFiles)
-            # self.log.info('index : {}'.format(self.Filetree.selectedIndexes()))
+            # self.log.info('index : {}'.format(self.Filetree_Private.selectedIndexes()))
             downloadFileInfo = {}
             downloadFileInfo['filename'] = selectFiles[0].text(0)
             downloadFileInfo['postfix'] = selectFiles[0].text(1)
+            downloadFileInfo['filehash'] = selectFiles[0].text(2)
             downloadFileInfo['encryption_type'] = selectFiles[0].text(3)
 
             downloadFileName = str().join((downloadFileInfo['filename'],
@@ -248,7 +264,7 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
                     self.download_dialog.show()
 
                     self.client.dpbar = self.download_dialog
-                    retInfo = self.client.download(downloadFileName,
+                    retInfo = self.client.download(downloadFileInfo['filehash'],
                                                    downloadFilePath,
                                                    decryption_type= downloadFileInfo['encryption_type'])
                     if retInfo[0] == 0:
@@ -258,7 +274,8 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
 
     @auth
     def refresh(self):
-        self.Filetree.clear()
+        self.Filetree_Private.clear()
+        self.Filetree_Public.clear()
         listInfo = self.client.list()
         # start files list
         # fileList = self.client.list('/')
@@ -270,13 +287,43 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
                         encryption = file['encryption_type']
                     else:
                         encryption = 'None'
-                    fileItem = QtWidgets.QTreeWidgetItem([file['name'], file['postfix'][1:],
+                    if str(file['uid']) != str(self.client.id) or file['is_delete'] == 1:
+                        continue
+                    if str(file['public']) == '1':
+                        is_public = 'Yes'
+                    else:
+                        is_public = 'No'
+                    fileItem = QtWidgets.QTreeWidgetItem([file['name'],
+                                                          file['postfix'][1:],
+                                                          file['hashcode'],
                                                           utils.prettySize(file['size']),
                                                           encryption,
-                                                          file['updatetime']])
+                                                          file['updatetime'],
+                                                          is_public
+                                                          ])
                     fileList.addChild(fileItem)
-            self.Filetree.addTopLevelItem(fileList)
-            self.Filetree.expandToDepth(0)
+            self.Filetree_Private.addTopLevelItem(fileList)
+            self.Filetree_Private.expandToDepth(0)
+            # refresh Public
+            public_fileList = QtWidgets.QTreeWidgetItem([" /"])
+            for file in listInfo[1]:
+                if file['encryption'] == '1':
+                    encryption = file['encryption_type']
+                else:
+                    encryption = 'None'
+                if str(file['public']) != '1':
+                    continue
+                fileItem = QtWidgets.QTreeWidgetItem([file['name'],
+                                                      file['postfix'][1:],
+                                                      file['hashcode'],
+                                                      utils.prettySize(file['size']),
+                                                      encryption,
+                                                      file['updatetime']
+                                                      ])
+                public_fileList.addChild(fileItem)
+            self.Filetree_Public.addTopLevelItem(public_fileList)
+            self.Filetree_Public.expandToDepth(0)
+            # end
             self.Infolist.addItem("Refresh Completed")
         else:
             self.Infolist.addItem(str(listInfo[1]))
@@ -312,14 +359,87 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
         # #     for file in fileList[1]:
         # fileItem = QtWidgets.QTreeWidgetItem(['1','2','3','4'])
         # fileList.addChild(fileItem)
-        # self.Filetree.addTopLevelItem(fileList)
+        # self.Filetree_Private.addTopLevelItem(fileList)
         # self.upload_dialog.UploadProgress.setValue(50)
         self.upload_dialog.ui.UploadProgress.setValue(self.step)
 
-    def test(self):
-        # a=self.Filetree.headerItem()
-        # print(a.text(0))
-        pass
+    def openmenu(self, position):
+        indexes = self.Filetree_Private.selectedIndexes()
+        if len(indexes) > 0:
+            level = 0
+            index = indexes[0]
+            while index.parent().isValid():
+                index = index.parent()
+                level += 1
 
-        # self.Infolist.addItem(str('abc'))
-        # self.Infolist.addItem(str('123sdfadfadsdfadfadsfadfadfasdfadfadsfadfadfasfadfadfadsfadf'))
+        menu = QMenu(self)
+        if level == 0:
+            # menu.addAction(self.tr("Edit person"))
+            pass
+        elif level == 1:
+            selectFile = self.Filetree_Private.selectedItems()
+
+            Items = ['delete', 'transfer', 'open', 'close_open']
+
+            for item in Items:
+                if item == 'open' and selectFile[0].text(6) == 'Yes':
+                    continue
+                if item == 'close_open' and selectFile[0].text(6) != 'Yes':
+                    continue
+                action = QAction(item, self)
+                action.triggered.connect(getattr(self, 'file_{}'.format(item)))
+                menu.addAction(action)
+        elif level == 2:
+            menu.addAction(self.tr("Edit object"))
+        menu.exec_(self.Filetree_Private.mapToGlobal(position))
+
+    def file_transfer(self):
+        print('transfer')
+
+    def file_delete(self):
+        selectFiles = self.Filetree_Private.selectedItems()
+        filehash = selectFiles[0].text(2)
+        reply = QMessageBox.question(self, 'Message', "Are you sure to delete this file?",
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            retInfo = self.client.delete_file(filehash)
+            # self.openfile_dialog.close()
+            self.Infolist.addItem(retInfo[1])
+            self.Infolist.scrollToBottom()
+            self.refresh()
+        else:
+            self.log.info('cancel delete file')
+
+    @auth
+    def file_open(self):
+        def sure():
+            selectFile = self.Filetree_Private.selectedItems()
+            self.log.info("open file : ".format(selectFile[0].text(2)))
+            retInfo = self.client.open_file(selectFile[0].text(2))
+            self.openfile_dialog.close()
+            self.Infolist.addItem(retInfo[1])
+            self.Infolist.scrollToBottom()
+            self.refresh()
+
+        self.openfile_dialog = QtWidgets.QDialog()
+        self.openfile_dialog.ui = Ui_Open_File()
+        self.openfile_dialog.accept = sure
+        self.openfile_dialog.ui.setupUi(self.openfile_dialog)
+        self.openfile_dialog.show()
+
+    def file_close_open(self):
+        def sure():
+            selectFile = self.Filetree_Private.selectedItems()
+            self.log.info("close file : ".format(selectFile[0].text(2)))
+            retInfo = self.client.close_file(selectFile[0].text(2))
+            self.closefile_dialog.close()
+            self.Infolist.addItem(retInfo[1])
+            self.Infolist.scrollToBottom()
+            self.refresh()
+
+        self.closefile_dialog = QtWidgets.QDialog()
+        self.closefile_dialog.ui = Ui_Close_File()
+        self.closefile_dialog.accept = sure
+        self.closefile_dialog.ui.setupUi(self.closefile_dialog)
+        self.closefile_dialog.show()

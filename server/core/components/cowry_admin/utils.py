@@ -1,149 +1,49 @@
-"""functions helper."""
+import json, hashlib
+from functools import wraps
+from flask import request, Response, redirect, url_for, render_template
+from flask_login import login_user, logout_user, login_required, current_user
+from service import app, schema, d
 
-from ast import literal_eval
-import os
-import hashlib
-import random
-import uuid
-import time
-import shutil
-import re
-import socket
-import _thread
+def valid_login(e, p, type='user'):
+    print(e,p,type)
+    if type == 'manager':
+        user = d.session.query(schema.manager.Manager).filter(schema.manager.Manager.email==e).first()
+        print(1,user)
+        if user and user.username and hashlib.md5(p.encode('utf8')).hexdigest() == user.password:
+            return True
+    elif type == 'user':
+        user = d.session.query(schema.user.User).filter(schema.user.User.email==e).first()
+        print(2,user)
+        if user and user.username and hashlib.md5(p.encode('utf8')).hexdigest() == user.password:
+            return True
+    return False
+
+def get_user(e, type='manager'):
+        if type == 'manager':
+            return d.session.query(schema.manager.Manager).filter(schema.manager.Manager.email==e).first()
+        else:
+            return d.session.query(schema.user.User).filter(schema.user.User.email==e).first()
+
+def json_response(view_func):
+    @wraps(view_func)
+    def wrapper(*args, **kwargs):
+        response = view_func(*args, **kwargs)
+        response_code = 200
+        response_headers = dict()
+        if isinstance(response, dict) or isinstance(response, list):
+            response_body = json.dumps(response, indent=4)
+        elif isinstance(response, tuple):
+            if len(response) == 2:
+                response_body, response_code = response
+            else:
+                response_body, response_code, response_headers = response
+
+            response_body = json.dumps(response_body, indent=4)
+        else:
+            response_body = response
+
+        return Response(response=response_body, status=response_code,
+                        headers=response_headers, mimetype='application/json')
 
 
-def addAppPath(path):
-    """Add a path to sys path."""
-    os.sys.path.append(path)
-
-def getCwd():
-    """pass."""
-    return os.getcwd()
-
-def checkAbsPath(path):
-    """pass."""
-    return os.path.isabs(path)
-
-def prettySize(num, suffix='B'):
-    """pass."""
-    num = int(num)
-    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
-        if abs(num) < 1024.0:
-            return "{:.3f} {}{}".format(num, unit, suffix)
-        num /= 1024.0
-
-def getSizeByPath(filepath):
-    """pass."""
-    return os.path.getsize(filepath)
-
-def getBaseNameByPath(filepath):
-    """pass."""
-    return os.path.basename(filepath)
-
-def getDirNameByPath(filepath):
-    """pass."""
-    return os.path.dirname(filepath)
-
-def calculateHashCodeForFile(filepath):
-    """pass."""
-    try:
-        with open(filepath, 'rb') as f:
-            fileHashCode = hashlib.md5(f.read()).hexdigest()
-    except Exception as e:
-        return (1, str(e))
-    return fileHashCode
-def calculateHashCodeForString(string, method='md5'):
-    """pass."""
-    return getattr(hashlib, method)(string.encode('utf8')).hexdigest()
-    # return hashlib.md5(str.encode('utf8')).hexdigest()
-
-def generateRandomDigitFromRange(start, end):
-    """pass."""
-    return random.randrange(start, end)
-
-def rebuildDictFromBytes(bytestr):
-    """pass."""
-    return literal_eval(bytestr.decode('utf8'))
-
-def startNewThread(work, params=()):
-    """pass."""
-    if params:
-        _thread.start_new_thread(work, params)
-    else:
-        _thread.start_new_thread(work, ())
-
-def seperateFileName(filename):
-    """pass."""
-    return  os.path.splitext(filename)
-
-def getFileContent(filepath, method= ''):
-    """pass."""
-    mode = 'r{}'.format(method)
-    with open(filepath, mode) as f:
-        content = f.read()
-    return content
-
-def generateAuthToken():
-    """pass."""
-    return uuid.uuid4().hex.upper()
-
-def getCurrentTime():
-    """pass."""
-    return time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-
-def joinFilePath(*params):
-    """pass."""
-    params = [x for x in params]
-    return os.path.join(*params)
-
-def deleteFile(filepath):
-    """pass."""
-    try:
-        os.remove(filepath)
-    except Exception as e:
-        return (1, str(e))
-    else:
-        return (0, 'ok')
-
-def copyfile(src, dst):
-    """pass."""
-    try:
-        shutil.copyfile(src, dst)
-    except Exception as e:
-        return (1, str(e))
-    else:
-        return (0, 'ok')
-
-def getenv(name):
-    """pass."""
-    return os.getenv(name)
-
-def setenv(name, value):
-    """pass."""
-    os.environ[name] = str(value)
-
-def makeDirs(filepath):
-    """pass."""
-    return os.makedirs(filepath)
-
-def delfolder(folderpath):
-    """pass."""
-    if checkFolderExists(folderpath):
-        shutil.rmtree(folderpath)
-
-def checkFileExists(filepath):
-    """pass."""
-    return os.path.isfile(filepath)
-
-def checkFolderExists(path):
-    """pass."""
-    return os.path.isdir(path)
-
-def verifyDomain(domain):
-    """pass."""
-    reg = r'^[a-z0-9]([a-z0-9-]+\.){1,}[a-z0-9]+\Z'
-    return re.search(reg, domain)
-
-def getHostAddr():
-    """pass."""
-    return socket.gethostbyname(socket.gethostname())
+    return wrapper

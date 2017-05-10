@@ -40,7 +40,7 @@ class FTPClient(BaseSocket):
             return (1, recvInfo[1])
 
         if self.recvInfo['status'] == '0':
-            return (0, 'Login Successd', self.certInfo)
+            return (0, 'Login Successd', self.certInfo, self.recvInfo['uid'])
         else:
             return (1, self.recvInfo['reason'])
 
@@ -124,7 +124,7 @@ class FTPClient(BaseSocket):
         # uploadProcess = Upload()
 
     # @decrypt
-    def download(self, filename, savefilepath, decryption_type=None):
+    def download(self, filehash, savefilepath, decryption_type=None):
         # filename = os.path.basename(filepath)
         # filesize = os.path.getsize(filepath)
         # try:
@@ -132,7 +132,7 @@ class FTPClient(BaseSocket):
         #         fileHashCode = hashlib.md5(f.read()).hexdigest()
         # except Exception as e:
         #     return (1, str(e))
-        downloadCmdCode = {'info': 'download', 'code': '', 'filename': filename}
+        downloadCmdCode = {'info': 'download', 'code': '', 'filehash': filehash}
         retInfo = self.sendMsg(downloadCmdCode)
         if retInfo[0] == 1:
             self.log.info(retInfo[1])
@@ -144,6 +144,10 @@ class FTPClient(BaseSocket):
                 downloadAuthCode = self.recvInfo['token']
                 remoteDataInfo = self.recvInfo['dataAddress']
                 fileHashCode = self.recvInfo['fileinfo']['hashcode']
+
+                filename = str().join((self.recvInfo['fileinfo']['name'],
+                                               '.',
+                                               self.recvInfo['fileinfo']['postfix']))
 
                 if decryption_type != 'None':
                     saveFilePath = utils.joinFilePath('/tmp/', filename + '.enc')
@@ -185,6 +189,60 @@ class FTPClient(BaseSocket):
 
     def downloadComfirm(self):
         self.dpbar.close()
+
+    def open_file(self, filehash):
+        openFileCmdCode = {'info': 'openFile', 'code': '', 'filehash': filehash}
+        self.log.info('start open file')
+        retInfo = self.sendMsg(openFileCmdCode)
+        if retInfo[0] == 1:
+            self.log.info(retInfo[1])
+            return (1, retInfo[1])
+
+        recvInfo = self.recvMsg()
+        if recvInfo[0] == 1:
+            self.log.info(recvInfo[1])
+            return (1, recvInfo[1])
+
+        if self.recvInfo['status'] == '0':
+            return (0, 'file open successd.')
+        else:
+            return (1, self.recvInfo['reason'])
+
+    def close_file(self, filehash):
+        closeFileCmdCode = {'info': 'closeFile', 'code': '', 'filehash': filehash}
+        self.log.info('start close file')
+        retInfo = self.sendMsg(closeFileCmdCode)
+        if retInfo[0] == 1:
+            self.log.info(retInfo[1])
+            return (1, retInfo[1])
+
+        recvInfo = self.recvMsg()
+        if recvInfo[0] == 1:
+            self.log.info(recvInfo[1])
+            return (1, recvInfo[1])
+
+        if self.recvInfo['status'] == '0':
+            return (0, 'file close successd.')
+        else:
+            return (1, self.recvInfo['reason'])
+
+    def delete_file(self, filehash):
+        deleteFileCmdCode = {'info': 'deleteFile', 'code': '', 'filehash': filehash}
+        self.log.info('start delete file')
+        retInfo = self.sendMsg(deleteFileCmdCode)
+        if retInfo[0] == 1:
+            self.log.info(retInfo[1])
+            return (1, retInfo[1])
+
+        recvInfo = self.recvMsg()
+        if recvInfo[0] == 1:
+            self.log.info(recvInfo[1])
+            return (1, recvInfo[1])
+
+        if self.recvInfo['status'] == '0':
+            return (0, 'file delete successd.')
+        else:
+            return (1, self.recvInfo['reason'])
 
     def refresh(self, folder):
         return self.list(folder)

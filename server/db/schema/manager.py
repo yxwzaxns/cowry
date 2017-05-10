@@ -6,9 +6,10 @@ from sqlalchemy import Column, Integer, String
 Base = declarative_base()
 
 class Manager(Base):
-    __tablename__ = 'manager'
+    __tablename__ = 'managers'
 
     id = Column(Integer, primary_key=True)
+    uuid = Column(String(32))
     username = Column(String(10))
     email = Column(String(10))
     password = Column(String(50))
@@ -25,5 +26,9 @@ class Manager(Base):
     def is_anonymous(self):
         return False
 
+    @property
+    def is_admin(self):
+        return True
+
     def get_id(self):
-        return self.id
+        return self.uuid

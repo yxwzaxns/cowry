@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """cowry server sources."""
 import os
 import argparse
@@ -24,6 +25,8 @@ if __name__ == '__main__':
         defaultConfigPath = args.config
         if utils.checkFileExists(defaultConfigPath):
             utils.setenv('COWRY_CONFIG', defaultConfigPath)
+            currentPath = os.path.dirname(os.path.realpath(defaultConfigPath))
+            utils.setenv('COWRY_ROOT', currentPath)
     else:
         currentPath = os.path.dirname(os.path.realpath(__file__))
         utils.setenv('COWRY_ROOT', currentPath)

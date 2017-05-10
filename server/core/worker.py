@@ -4,7 +4,7 @@ from core.database import Db
 from core.upload import Upload
 from core.download import Download
 from db import schema
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from core.config import Settings
 from core import utils
 
@@ -116,20 +116,20 @@ class Worker(threading.Thread, BaseSocket):
     def download(self):
         # recv info code {'info': 'download', 'code': '', 'filename': downloadFileName}
 
-        downloadFileName = self.recvInfo['filename']
-        baseFileName, postfix = utils.seperateFileName(downloadFileName)
+        downloadFileHash = self.recvInfo['filehash']
+        # baseFileName, postfix = utils.seperateFileName(downloadFileName)
         # downloadFileSize = self.recvInfo['filesize']
         # currentTime = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
         # to do
         # to determeine whether have repeat value in db
         try:
-            fileInfo = self.session.query(self.file).filter(and_(self.file.uid == self.userid, self.file.name == baseFileName, self.file.postfix == postfix)).first()
+            fileInfo = self.session.query(self.file).filter_by(hashcode=downloadFileHash).first()
             # self.session.add(self.file(uid= self.userid, name= downloadFileName, size= downloadFileSize, hashcode= downloadFileHashCode,updatetime= currentTime, postfix= postfix))
         except Exception as e:
             remsg = {'info': 'download', 'code': self.recvInfo['code'], 'status': '1', 'reason': str(e)}
             self.sendMsg(remsg)
         else:
-            if fileInfo.id:
+            if fileInfo:
                 retInfo = self.createDataSock() #return (int, tuple(ip,port))
                 if retInfo[0] == 1:
                     self.log.info('createDataSock fails: {}'.format(retInfo[1]))
@@ -149,10 +149,10 @@ class Worker(threading.Thread, BaseSocket):
 
     @auth
     def list(self):
-        listInfo = self.session.query(self.file).filter_by(uid= self.userid).all()
-
+        # listInfo = self.session.query(self.file).filter_by(uid= self.userid).all()
+        files_list = self.session.query(self.file).filter(or_(and_(self.file.uid==self.userid, self.file.is_delete==0), and_(self.file.public==1, self.file.is_delete==0))).all()
         res = []
-        for l in listInfo:
+        for l in files_list:
             res_t = {}
             for i in l.__dict__:
                 res_t[i] = getattr(l, i)
@@ -162,6 +162,43 @@ class Worker(threading.Thread, BaseSocket):
         remsg = {'info': 'list', 'code': self.recvInfo['code'], 'status': '0', 'list': res}
         self.sendMsg(remsg)
 
+    @auth
+    def openFile(self):
+        try:
+            openfile = self.session.query(self.file).filter_by(hashcode=self.recvInfo['filehash']).first()
+            openfile.public = '1'
+            self.session.commit()
+        except Exception as e:
+            remsg = {'info': 'openFile', 'code': self.recvInfo['code'], 'status': '1', 'reason': str(e)}
+        else:
+            remsg = {'info': 'openFile', 'code': self.recvInfo['code'], 'status': '0'}
+        self.sendMsg(remsg)
+
+    @auth
+    def closeFile(self):
+        try:
+            openfile = self.session.query(self.file).filter_by(hashcode=self.recvInfo['filehash']).first()
+            openfile.public = '0'
+            self.session.commit()
+        except Exception as e:
+            remsg = {'info': 'closeFile', 'code': self.recvInfo['code'], 'status': '1', 'reason': str(e)}
+        else:
+            remsg = {'info': 'closeFile', 'code': self.recvInfo['code'], 'status': '0'}
+        self.sendMsg(remsg)
+
+    @auth
+    def deleteFile(self):
+        try:
+            openfile = self.session.query(self.file).filter_by(hashcode=self.recvInfo['filehash']).first()
+            openfile.is_delete = 1
+            self.session.commit()
+        except Exception as e:
+            remsg = {'info': 'closeFile', 'code': self.recvInfo['code'], 'status': '1', 'reason': str(e)}
+        else:
+            remsg = {'info': 'closeFile', 'code': self.recvInfo['code'], 'status': '0'}
+        self.sendMsg(remsg)
+
+
     def login(self):
         res = self.session.query(self.user).filter_by(username= self.recvInfo['u']).first()
         if res and res.password == utils.calculateHashCodeForString(self.recvInfo['p']):
@@ -169,7 +206,7 @@ class Worker(threading.Thread, BaseSocket):
             self.userid = res.id
             self.loginStatus = True
 
-            remsg = {'info': 'login', 'code': self.recvInfo['code'], 'status': '0'}
+            remsg = {'info': 'login', 'code': self.recvInfo['code'], 'status': '0', 'uid': str(self.userid)}
             self.sendMsg(remsg)
         else:
             remsg = {'info': 'login', 'code': self.recvInfo['code'], 'status': '1', 'reason': 'user not exist or authentication fails'}

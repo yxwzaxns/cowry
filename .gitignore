@@ -8,4 +8,5 @@ build
 *.egg-info
 data
 /temp
+log/
 certs
