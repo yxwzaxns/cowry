@@ -59,10 +59,11 @@ class Upload(threading.Thread, BaseSocket):
         except Exception as e:
             self.log.info("checkFileIfUpload : {}".format(str(e)))
         else:
+            self.log.info('upload file  md5 code is : {}'.format(fileHashCode))
             if fileHashCode == self.fileHashCode:
                 remsg = {"info": 'uploadReturn', 'code': '23333', 'status': '0'}
             else:
-                deleteFile(filepath)
+                # deleteFile(self.uploadFilePath)
                 remsg = {"info": 'uploadReturn', 'code': '23333', 'status': '1', 'reason': "md5 code not same as upload file"}
             self.sendMsg(remsg)
         self.close()

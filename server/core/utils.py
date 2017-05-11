@@ -1,6 +1,7 @@
 """functions helper."""
 
 from ast import literal_eval
+import base64
 import os
 import hashlib
 import random
@@ -52,10 +53,22 @@ def calculateHashCodeForFile(filepath):
     except Exception as e:
         return (1, str(e))
     return fileHashCode
+
 def calculateHashCodeForString(string, method='md5'):
     """pass."""
     return getattr(hashlib, method)(string.encode('utf8')).hexdigest()
     # return hashlib.md5(str.encode('utf8')).hexdigest()
+
+def calculateFingerprintForSSHKey(line):
+    key = base64.b64decode(line.strip().split()[1].encode('ascii'))
+    fp_plain = hashlib.md5(key).hexdigest()
+    return ':'.join(a+b for a,b in zip(fp_plain[::2], fp_plain[1::2]))
+
+def check_public_key(key):
+    # key = base64.b64decode(line.strip().split()[1].encode('ascii'))
+    # fp_plain = hashlib.md5(key).hexdigest()
+    return True
+
 
 def generateRandomDigitFromRange(start, end):
     """pass."""
