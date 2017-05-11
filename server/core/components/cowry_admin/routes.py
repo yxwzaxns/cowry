@@ -1,5 +1,5 @@
 import json, hashlib
-from flask import request, Response, redirect, url_for, render_template
+from flask import request, Response, redirect, url_for, render_template, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from service import app, schema, d
 from utils import *
@@ -8,7 +8,15 @@ import user_routes
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    cert_path = app.settings.certificates.certificate
+    filehash = app.utils.calculateHashCodeForFile(cert_path)
+    with open(cert_path, 'r') as f:
+        cert_file = f.read()
+    cert = app.utils.importCert(cert_file)
+    cert_digest = cert.digest("sha256")
+    cert_info = {'digest': cert_digest.decode(),
+                 'filehash': filehash}
+    return render_template('index.html', cert_info=cert_info)
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
@@ -36,7 +44,8 @@ def logout():
     logout_user()
     return redirect('/')
 
-@app.route('/t')
-@login_required
-def t():
-    return 'ok'
+@app.route('/download_cert')
+def download_cert():
+    return send_file(app.settings.certificates.certificate,
+                     as_attachment=True,
+                     attachment_filename='server.crt')

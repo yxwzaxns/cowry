@@ -26,10 +26,17 @@ def users():
     return [1,2,3,4,5], 200
 
 @app.route('/api/certs')
-@login_required
 @json_response
 def certs():
-    return [1,2,3,4,5], 200
+    cert_path = app.settings.certificates.certificate
+    with open(cert_path, 'r') as f:
+        cert_file = f.read()
+    cert = app.utils.importCert(cert_file)
+    cert_digest = cert.digest("sha256")
+    cert_signature_algorithm = cert.get_signature_algorithm()
+    cert_info = {'cert_digest_{}'.format('sha256'): cert_digest.decode(),
+                 'cert_signature_algorithm': cert_signature_algorithm.decode()}
+    return cert_info
 # class Status(Resource):
 #     def get(self, item):
 #         return {'hello': 'world'}

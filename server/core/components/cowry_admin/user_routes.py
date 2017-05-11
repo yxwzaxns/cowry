@@ -8,6 +8,7 @@ from utils import *
 @app.route('/home')
 @login_required
 def home():
+    print('!!!!!!!{} ^^^ {} !!!!'.format(current_user.is_authenticated, current_user.username))
     return render_template('home/index.html')
 
 @app.route('/home/settings', methods=['POST', 'GET'])
@@ -30,9 +31,9 @@ def register():
         try:
             d.session.add(schema.user.User(username= request.form['username'],
                                            uuid= generateGUID(),
-                                   email= request.form['email'],
-                                   password= hashlib.md5(request.form['password'].encode('utf8')).hexdigest()
-                                   ))
+                                           email= request.form['email'],
+                                           password= hashlib.md5(request.form['password'].encode('utf8')).hexdigest()
+                                           ))
             d.session.commit()
         except Exception as e:
             error = str(e)
