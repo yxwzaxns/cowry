@@ -30,6 +30,15 @@ def calculateHashCodeForFile(filepath):
         return (1, str(e))
     return fileHashCode
 
+def check_public_key(key):
+    # key = base64.b64decode(line.strip().split()[1].encode('ascii'))
+    # fp_plain = hashlib.md5(key).hexdigest()
+    return True
+
+def generateSaltCipher(key):
+    key = key.encode() + os.urandom(32)
+    return hashlib.sha256(key).hexdigest()[0:32]
+
 def generateRandomDigitFromRange(start, end):
     return random.randrange(start, end)
 
@@ -112,3 +121,9 @@ def getHostAddr():
 # client functions
 def getUserHome():
     return os.path.expanduser('~')
+
+def convertPathFromHome(path):
+    return os.path.expanduser(path)
+
+def moveFile(src, dst):
+    shutil.move(src, dst)

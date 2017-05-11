@@ -5,5 +5,8 @@ recv_file_buffer_size = 1024
 send_cmd_buffer_size = 1024
 recv_cmd_buffer_size = 1024
 
+public_key =
+private_key =
+
 [CERTIFICATES]
 certdirs =

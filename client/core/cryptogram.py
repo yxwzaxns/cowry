@@ -1,10 +1,13 @@
 """Encrypt files ations."""
 import random
 import os
+import base64
 import struct
 import hashlib
 from Crypto.Cipher import AES
+from Crypto.PublicKey import RSA
 from core.syslog import Syslog
+from core import utils
 
 AES_CBC = "aes_cbc"
 DES_CBC = ""
@@ -26,6 +29,19 @@ class Cryptogram(object):
     def __init__(self):
         super(Cryptogram, self).__init__()
         self.log = Syslog()
+
+    def encrypt_text(self, string, key):
+        add_salt_key = utils.generateSaltCipher(string)
+        rsa_key = RSA.importKey(key)
+        c = rsa_key.encrypt(add_salt_key.encode(), 'a')
+        cb64 = base64.b64encode(c[0])
+        return (0, cb64)
+
+    def decrypt_text(self, string, key):
+        rsa_key = RSA.importKey(key)
+        c = base64.b64decode(string)
+        p = rsa_key.decrypt(c).decode()
+        return (0, p)
 
     def encrypt(self, key, filepath, mode=AES_CBC):
         self.log.info('prepare encrypt file : {} \nuse mode is :{} \n, Cipher is :{} '.format(filepath, mode, key))
