@@ -48,6 +48,11 @@
 				<div class="row">
 					<div class="col-lg-12">
 						<form id="login-form" action="/login" method="post" role="form" style="display: block;">
+              <label style="color:red">
+                {% if error %}
+                  Notes: {{ error }}!
+                {% endif %}
+              </label>
               <input type="hidden" name='type' value="{{ type }}">
               <div class="form-group">
 								<input type="text" name="email" id="username" tabindex="1" class="form-control" placeholder="Email" value="">

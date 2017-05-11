@@ -30,30 +30,27 @@
             <th>code</th>
           </tr>
           <tr>
-            <td>certs</td>
-            <td>md5</td>
-            <td>asfasf</td>
+            <td>file</td>
+            <td>sha256</td>
+            <td>{{ cert_info['filehash'] }}</td>
           </tr>
           <tr>
-            <td>certs</td>
-            <td>sha1</td>
-            <td>asfasf</td>
+            <td>signature</td>
+            <td>sha256</td>
+            <td>{{ cert_info['digest'] }}</td>
           </tr>
         </table>
         <div class="btn-group" role="group" aria-label="...">
-          <button type="button" class="btn btn-success">Download Certificate</button>
+
           <!-- <button type="button" class="btn btn-default">Middle</button> -->
           <!-- <button type="button" class="btn btn-default">Right</button> -->
         </div>
       </div>
 
       <div class="">
-        <a href="/login?type=manager">
-          <button type="button" class="btn btn-default">System Manage</button>
-        </a>
-        <a href="/login?type=user">
-          <button type="button" class="btn btn-default">User Panel</button>
-        </a>
+        <a href="/download_cert"><button type="button" class="btn btn-success">Download Certificate</button></a>
+        <a href="/login?type=manager"><button type="button" class="btn btn-default">System Manage</button></a>
+        <a href="/login?type=user"><button type="button" class="btn btn-default">User Panel</button></a>
       </div>
     </div>
   </div>

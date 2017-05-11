@@ -11,6 +11,7 @@ import shutil
 import re
 import socket
 import _thread
+import OpenSSL
 
 
 def addAppPath(path):
@@ -163,3 +164,6 @@ def verifyDomain(domain):
 def getHostAddr():
     """pass."""
     return socket.gethostbyname(socket.gethostname())
+
+def importCert(path):
+    return OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, path)
