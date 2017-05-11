@@ -70,7 +70,9 @@ class FTPClient(BaseSocket):
         filesize = utils.getSizeByPath(filepath)
         # check if need to encrypt files
         if self.encryption is True:
-            retInfo = self.crypt.encrypt(str(self.encryption_cipher).strip(), filepath, mode= str(self.encryption_type).strip())
+            retInfo = self.crypt.encrypt(str(self.encryption_cipher).strip(),
+                                         filepath,
+                                         mode= str(self.encryption_type).strip())
             if retInfo[0] == 0:
                 enctryptedFilePath = retInfo[1]
             else:
@@ -82,7 +84,7 @@ class FTPClient(BaseSocket):
                              "code": "",
                              "filename": filename,
                              "filesize": filesize,
-                             "encryption": "1",
+                             "encryption": 1,
                              "encsize": encryptedFileSize,
                              "encryption_type": self.encryption_type,
                              "hash": fileHashCode }
@@ -93,7 +95,7 @@ class FTPClient(BaseSocket):
                              "code": "",
                              "filename": filename,
                              "filesize": filesize,
-                             "encryption": "0",
+                             "encryption": 0,
                              "encryption_type": "0",
                              "encsize": "0",
                              "hash": fileHashCode }
@@ -124,7 +126,7 @@ class FTPClient(BaseSocket):
         # uploadProcess = Upload()
 
     # @decrypt
-    def download(self, filehash, savefilepath, decryption_type=None):
+    def download(self, filehash, savefilepath):
         # filename = os.path.basename(filepath)
         # filesize = os.path.getsize(filepath)
         # try:
@@ -143,27 +145,23 @@ class FTPClient(BaseSocket):
             elif self.recvInfo['status'] == '0':
                 downloadAuthCode = self.recvInfo['token']
                 remoteDataInfo = self.recvInfo['dataAddress']
-                fileHashCode = self.recvInfo['fileinfo']['hashcode']
+                fileInfo = self.recvInfo['fileinfo']
 
-                filename = str().join((self.recvInfo['fileinfo']['name'],
-                                               '.',
-                                               self.recvInfo['fileinfo']['postfix']))
-
-                if decryption_type != 'None':
-                    saveFilePath = utils.joinFilePath('/tmp/', filename + '.enc')
-                    fileSize = self.recvInfo['fileinfo']['encsize']
+                if fileInfo['encryption'] != 0:
+                    # saveFilePath = utils.joinFilePath('/tmp/', fileInfo['name'] + '.enc')
+                    # fileSize = fileInfo['encsize']
                     decryptInfo = {
-                        "encryption_type": self.encryption_type,
+                    #     "encryption_type": self.encryption_type,
                         "cipher": self.encryption_cipher,
-                        "savefilepath": savefilepath
+                        # "savefilepath": savefilepath
                     }
                 else:
-                    saveFilePath = savefilepath
-                    fileSize = self.recvInfo['fileinfo']['size']
+                    # saveFilePath = savefilepath
+                    # fileSize = fileInfo['size']
                     decryptInfo = None
                 self.log.info('recv download auth token is : {}'.format(downloadAuthCode))
                 self.log.info('remote open data info : {}:{}'.format(remoteDataInfo[0],remoteDataInfo[1]))
-                self.downloadProcess = Download(remoteDataInfo, saveFilePath, downloadAuthCode, fileHashCode, fileSize, decrypt_info= decryptInfo)
+                self.downloadProcess = Download(remoteDataInfo, savefilepath, downloadAuthCode, fileInfo, decryptInfo)
                 # print(self.uploadProcess.__dict__)
                 self.downloadProcess.signal.p.connect(self.setDpbarValue)
                 self.downloadProcess.start()
@@ -238,6 +236,51 @@ class FTPClient(BaseSocket):
         if recvInfo[0] == 1:
             self.log.info(recvInfo[1])
             return (1, recvInfo[1])
+
+        if self.recvInfo['status'] == '0':
+            return (0, 'file delete successd.')
+        else:
+            return (1, self.recvInfo['reason'])
+
+    def transfer_file(self, target_email, filehash):
+        getPubKeyCmdCode = {'info': 'getPubKey', 'code': '', 'email': target_email}
+        self.log.info('start get public_key')
+        retInfo = self.sendMsg(getPubKeyCmdCode)
+        if retInfo[0] == 1:
+            self.log.info(retInfo[1])
+            return (1, retInfo[1])
+
+        recvInfo = self.recvMsg()
+        if recvInfo[0] == 1:
+            self.log.info(recvInfo[1])
+            return (1, recvInfo[1])
+        else:
+            # get public key
+            public_key = self.recvInfo['public_key'].strip()
+            if public_key == 'None':
+                return (1, 'can\'t acquire public_key')
+            elif utils.check_public_key(public_key):
+                # encrypt user cipher with public_key
+                enc = self.crypt.encrypt_text(self.encryption_cipher, public_key)
+                transferFileCmdCode = {'info': 'transferFile', 'code': '', 'email': target_email, 'filehash': filehash, 'cipher_enc': enc[1]}
+                self.log.info('start transfer file to {}'.format(target_email))
+                retInfo = self.sendMsg(transferFileCmdCode)
+                if retInfo[0] == 1:
+                    self.log.info(retInfo[1])
+                    return (1, retInfo[1])
+
+                recvInfo = self.recvMsg()
+                if recvInfo[0] == 1:
+                    self.log.info(recvInfo[1])
+                    return (1, recvInfo[1])
+
+                if self.recvInfo['status'] == '0':
+                    return (0, 'file transfer successd.')
+                else:
+                    return (1, self.recvInfo['reason'])
+
+            else:
+                return (1, 'the public_key is\'t valid')
 
         if self.recvInfo['status'] == '0':
             return (0, 'file delete successd.')

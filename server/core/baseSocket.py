@@ -34,13 +34,14 @@ class BaseSocket(object):
             else:
                 loops = msgLentgh // self.SEND_CMD_BUFFER_SIZE
                 extendLentgh = msgLentgh % self.SEND_CMD_BUFFER_SIZE
-                self.log.info('perpare send recall info by {} loops: {}'.format(loops, msg))
                 for i in range(loops):
+                    self.log.info('perpare send recall info by {} loops: {}'.format(i, msg[i*self.SEND_CMD_BUFFER_SIZE:self.SEND_CMD_BUFFER_SIZE*(i + 1)]))
                     retInfo = func(self, msg[i*self.SEND_CMD_BUFFER_SIZE:self.SEND_CMD_BUFFER_SIZE*(i + 1)])
                     if retInfo[0] == 1:
                         return retInfo
                 fillSize = self.SEND_CMD_BUFFER_SIZE - extendLentgh
                 extendmsg = b''.join((msg[loops*self.SEND_CMD_BUFFER_SIZE:], b' ' * fillSize))
+                self.log.info('perpare send recall extendmsg : {}'.format(extendmsg))
                 return func(self, extendmsg)
         return wrapper
 
@@ -102,6 +103,8 @@ class BaseSocket(object):
             f.write(recvfile)
 
         calculateFileSize = utils.getSizeByPath(self.uploadFilePath)
+        self.log.info('upload file size is : {}'.format(calculateFileSize))
+        self.log.info('origin file size is : {}'.format(self.fileSize))
         if calculateFileSize == self.fileSize:
             self.clientSocket.send(b'0') # recv finished
             self.log.info('upload finished')

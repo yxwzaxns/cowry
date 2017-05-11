@@ -103,7 +103,7 @@ class BaseSocket(object):
         self.log.info('######## size of file is : {}########'.format(self.fileSize))
         loop = int(self.fileSize) // 1024
         extend = int(self.fileSize) % 1024
-        with open(self.saveFilePath, 'wb') as f:
+        with open(self.saveFilePath_E, 'wb') as f:
             recvedFileSize = 0
             for i in range(loop):
                 recvfile = self.ctrlSock.recv(1024)
@@ -120,13 +120,13 @@ class BaseSocket(object):
             f.write(recvfile)
             self.signal.recv.emit(0)
         # self.log.info('save size:{}/ file size:{}'.format(os.path.getsize(self.saveFilePath), self.downloadFileInfo['size']))
-        if utils.calculateHashCodeForFile(self.saveFilePath) == self.fileHashCode:
+        if utils.calculateHashCodeForFile(self.saveFilePath_E) == self.fileinfo['hashcode']:
             # self.sslctrlSock.send(b'0') # recv finished
             self.log.info('download file finished')
             return (0, 'ok')
         else:
             # self.sslctrlSock.send(b'2') # size not match
-            return (1, 'size not match')
+            return (1, 'hase code not match')
 
     def checkCmdCode(func):
         def wrapper(self):
@@ -178,7 +178,7 @@ class BaseSocket(object):
             return (1, str(e))
         tmpRecvInfo += recvInfo
 
-        while len(recvInfo) == int(self.settings.default.recv_cmd_buffer_size):
+        while len(recvInfo) == int(self.settings.default.recv_cmd_buffer_size) or recvInfo.decode('utf8')[-1] in [':',',']:
             self.log.info('recv length of info is over default length, start recv extend info')
             try:
                 recvInfo = self.ctrlSock.recv(1024).strip()
@@ -186,7 +186,6 @@ class BaseSocket(object):
                 return (1, str(e))
             else:
                 tmpRecvInfo += recvInfo
-
         self.recvInfo = utils.rebuildDictFromBytes(tmpRecvInfo)
         self.log.info('recv info {}'.format(self.recvInfo))
         return (0, "ok")
