@@ -6,10 +6,12 @@ from utils import *
 
 
 @app.route('/home')
+@login_required
 def home():
     return render_template('home/index.html')
 
 @app.route('/home/settings', methods=['POST', 'GET'])
+@login_required
 @json_response
 def settings():
     if request.method == 'POST':
@@ -20,3 +22,23 @@ def settings():
         return [request.form['pubkey'].strip()]
     else:
         return current_user.pubkey
+
+
+@app.route('/register', methods=['POST'])
+def register():
+    if request.form['password'] == request.form['confirm-password']:
+        try:
+            d.session.add(schema.user.User(username= request.form['username'],
+                                           uuid= generateGUID(),
+                                   email= request.form['email'],
+                                   password= hashlib.md5(request.form['password'].encode('utf8')).hexdigest()
+                                   ))
+            d.session.commit()
+        except Exception as e:
+            error = str(e)
+            return redirect(url_for('login', error=error))
+        else:
+            return redirect('/home')
+    else:
+        error = 'password not same as confirm-password'
+        redirect(url_for('login', error=error))
