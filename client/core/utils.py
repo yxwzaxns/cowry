@@ -8,6 +8,7 @@ import re
 import socket
 from ast import literal_eval
 import _thread
+import OpenSSL
 
 def prettySize(num, suffix='B'):
     num = int(num)
@@ -127,3 +128,16 @@ def convertPathFromHome(path):
 
 def moveFile(src, dst):
     shutil.move(src, dst)
+
+def importCert(path):
+    return OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, path)
+
+def getCertInfo(path):
+    filehash = calculateHashCodeForFile(path)
+    with open(path, 'r') as f:
+        certfile = f.read()
+    cert = importCert(certfile)
+    cert_digest = cert.digest("sha256")
+    cert_info = {'digest': cert_digest.decode(),
+                 'filehash': filehash}
+    return cert_info
