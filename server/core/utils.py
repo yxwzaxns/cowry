@@ -1,6 +1,7 @@
 """functions helper."""
 
 from ast import literal_eval
+import base64
 import os
 import hashlib
 import random
@@ -10,6 +11,7 @@ import shutil
 import re
 import socket
 import _thread
+import OpenSSL
 
 
 def addAppPath(path):
@@ -52,10 +54,22 @@ def calculateHashCodeForFile(filepath):
     except Exception as e:
         return (1, str(e))
     return fileHashCode
+
 def calculateHashCodeForString(string, method='md5'):
     """pass."""
     return getattr(hashlib, method)(string.encode('utf8')).hexdigest()
     # return hashlib.md5(str.encode('utf8')).hexdigest()
+
+def calculateFingerprintForSSHKey(line):
+    key = base64.b64decode(line.strip().split()[1].encode('ascii'))
+    fp_plain = hashlib.md5(key).hexdigest()
+    return ':'.join(a+b for a,b in zip(fp_plain[::2], fp_plain[1::2]))
+
+def check_public_key(key):
+    # key = base64.b64decode(line.strip().split()[1].encode('ascii'))
+    # fp_plain = hashlib.md5(key).hexdigest()
+    return True
+
 
 def generateRandomDigitFromRange(start, end):
     """pass."""
@@ -150,3 +164,16 @@ def verifyDomain(domain):
 def getHostAddr():
     """pass."""
     return socket.gethostbyname(socket.gethostname())
+
+def importCert(path):
+    return OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, path)
+
+def getCertInfo(path):
+    filehash = calculateHashCodeForFile(path)
+    with open(path, 'r') as f:
+        certfile = f.read()
+    cert = importCert(certfile)
+    cert_digest = cert.digest("sha256")
+    cert_info = {'digest': cert_digest.decode(),
+                 'filehash': filehash}
+    return cert_info

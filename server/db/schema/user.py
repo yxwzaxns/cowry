@@ -1,7 +1,7 @@
 __package__ = 'User'
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy import Column, Integer, String, Text, DefaultClause
 
 Base = declarative_base()
 
@@ -15,12 +15,15 @@ class User(Base):
     password = Column(String(50))
     createtime = Column(String(20))
     lastlogintime = Column(String(20))
-    active = Column(Integer) # 1 : active ; 0 disable
-    pubkey = Column(Text())
+    active = Column(Integer, DefaultClause('1')) # 1 : active ; 0 disable
+    pubkey = Column(Text(), DefaultClause('None'))
 
     @property
     def is_active(self):
-        return self.active
+        if self.active == 1:
+            return True
+        else:
+            return False
 
     @property
     def is_authenticated(self):

@@ -20,6 +20,7 @@ app = Flask('cowry_admin',
             template_folder='views')
 
 app.settings = Settings()
+app.utils = utils
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///{}'.format(app.settings.database.df)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.debug = True
@@ -45,10 +46,10 @@ d = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
+login_manager.login_message = None
 
 @login_manager.user_loader
 def load_user(user_uuid):
-    print("uuid is :",user_uuid, 'end')
     manager = d.session.query(schema.manager.Manager).filter(schema.manager.Manager.uuid==user_uuid).first()
     user = d.session.query(schema.user.User).filter(schema.user.User.uuid==user_uuid).first()
     if user:

@@ -98,7 +98,7 @@ class Worker(threading.Thread, BaseSocket):
         if retInfo[0] == 1:
             self.log.info('sendMsg fails: {}'.format(retInfo[1]))
         else:
-            if uploadFileInfo['encryption'] == '1':
+            if uploadFileInfo['encryption'] == 1:
                 uploadFileSize = uploadFileInfo['encsize']
             else:
                 uploadFileSize = uploadFileInfo['filesize']
@@ -123,13 +123,16 @@ class Worker(threading.Thread, BaseSocket):
         # to do
         # to determeine whether have repeat value in db
         try:
-            fileInfo = self.session.query(self.file).filter_by(hashcode=downloadFileHash).first()
+            fileInfo = self.session.query(self.file).filter(or_(and_(self.file.uid==self.userid, self.file.hashcode==downloadFileHash),
+                                                                and_(self.file.hashcode==downloadFileHash, self.file.public==1))).all()
             # self.session.add(self.file(uid= self.userid, name= downloadFileName, size= downloadFileSize, hashcode= downloadFileHashCode,updatetime= currentTime, postfix= postfix))
         except Exception as e:
             remsg = {'info': 'download', 'code': self.recvInfo['code'], 'status': '1', 'reason': str(e)}
             self.sendMsg(remsg)
         else:
-            if fileInfo:
+            self.log.info('search file has : {}\'s'.format(len(fileInfo)))
+            if len(fileInfo) == 1:
+                fileInfo = fileInfo[0]
                 retInfo = self.createDataSock() #return (int, tuple(ip,port))
                 if retInfo[0] == 1:
                     self.log.info('createDataSock fails: {}'.format(retInfo[1]))
@@ -146,6 +149,11 @@ class Worker(threading.Thread, BaseSocket):
                     downloadFilePath = utils.joinFilePath(self.settings.storage.datapath, fileInfo['hashcode'])
                     self.downloadProcess = Download(self.sslContext, self.dataSocket, downloadFilePath, authToken)
                     self.downloadProcess.start()
+            elif len(fileInfo) >= 2:
+                pass
+            else:
+                remsg = {'info': 'download', 'code': self.recvInfo['code'], 'status': '1', 'reason': 'can\'t find download file'}
+                retInfo = self.sendMsg(remsg)
 
     @auth
     def list(self):
@@ -165,7 +173,7 @@ class Worker(threading.Thread, BaseSocket):
     @auth
     def openFile(self):
         try:
-            openfile = self.session.query(self.file).filter_by(hashcode=self.recvInfo['filehash']).first()
+            openfile = self.session.query(self.file).filter(and_(self.file.uid==self.userid, self.file.hashcode==self.recvInfo['filehash'])).first()
             openfile.public = '1'
             self.session.commit()
         except Exception as e:
@@ -177,7 +185,7 @@ class Worker(threading.Thread, BaseSocket):
     @auth
     def closeFile(self):
         try:
-            openfile = self.session.query(self.file).filter_by(hashcode=self.recvInfo['filehash']).first()
+            openfile = self.session.query(self.file).filter(and_(self.file.uid==self.userid, self.file.hashcode==self.recvInfo['filehash'])).first()
             openfile.public = '0'
             self.session.commit()
         except Exception as e:
@@ -189,7 +197,7 @@ class Worker(threading.Thread, BaseSocket):
     @auth
     def deleteFile(self):
         try:
-            openfile = self.session.query(self.file).filter_by(hashcode=self.recvInfo['filehash']).first()
+            openfile = self.session.query(self.file).filter(and_(self.file.uid==self.userid, self.file.hashcode==self.recvInfo['filehash'])).first()
             openfile.is_delete = 1
             self.session.commit()
         except Exception as e:
@@ -198,6 +206,40 @@ class Worker(threading.Thread, BaseSocket):
             remsg = {'info': 'closeFile', 'code': self.recvInfo['code'], 'status': '0'}
         self.sendMsg(remsg)
 
+    @auth
+    def getPubKey(self):
+        try:
+            user = self.session.query(self.user).filter_by(email=self.recvInfo['email']).first()
+        except Exception as e:
+            remsg = {'info': 'getPubKey', 'code': self.recvInfo['code'], 'status': '1', 'reason': str(e)}
+        else:
+            remsg = {'info': 'getPubKey', 'code': self.recvInfo['code'], 'public_key': user.pubkey}
+        self.sendMsg(remsg)
+
+    @auth
+    def transferFile(self):
+        try:
+            user = self.session.query(self.user).filter_by(email=self.recvInfo['email']).first()
+            openfile = self.session.query(self.file).filter_by(hashcode=self.recvInfo['filehash']).first()
+            self.session.add(self.file(uid= user.id,
+                                       name= openfile.name,
+                                       size= openfile.size,
+                                       encryption= openfile.encryption,
+                                       encryption_type= openfile.encryption_type,
+                                       encsize= openfile.encsize,
+                                       hashcode= openfile.hashcode,
+                                       updatetime= openfile.updatetime,
+                                       postfix= openfile.postfix,
+                                       is_transfer= 1,
+                                       transfer_own= self.userid,
+                                       c_enc= self.recvInfo['cipher_enc']
+                                       ))
+            self.session.commit()
+        except Exception as e:
+            remsg = {'info': 'transferFile', 'code': self.recvInfo['code'], 'status': '1', 'reason': str(e)}
+        else:
+            remsg = {'info': 'transferFile', 'code': self.recvInfo['code'], 'status': '0'}
+        self.sendMsg(remsg)
 
     def login(self):
         res = self.session.query(self.user).filter_by(username= self.recvInfo['u']).first()

@@ -1,11 +1,11 @@
-import json, hashlib
+import json, hashlib, uuid
 from functools import wraps
 from flask import request, Response, redirect, url_for, render_template
 from flask_login import login_user, logout_user, login_required, current_user
 from service import app, schema, d
 
 def valid_login(e, p, type='user'):
-    print(e,p,type)
+    print('########valid_login',e,p,type)
     if type == 'manager':
         user = d.session.query(schema.manager.Manager).filter(schema.manager.Manager.email==e).first()
         print(1,user)
@@ -17,6 +17,9 @@ def valid_login(e, p, type='user'):
         if user and user.username and hashlib.md5(p.encode('utf8')).hexdigest() == user.password:
             return True
     return False
+
+def generateGUID():
+    return uuid.uuid1().hex.upper()
 
 def get_user(e, type='manager'):
         if type == 'manager':
