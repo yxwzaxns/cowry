@@ -30,10 +30,10 @@ class Cryptogram(object):
         super(Cryptogram, self).__init__()
         self.log = Syslog()
 
-    def encrypt_text(self, string, key):
-        add_salt_key = utils.generateSaltCipher(string)
+    def encrypt_text(self, string, key, mode='AES-128-CBC'):
+        CKey = self.convertKey(string, mode)
         rsa_key = RSA.importKey(key)
-        c = rsa_key.encrypt(add_salt_key.encode(), 'a')
+        c = rsa_key.encrypt(CKey.encode(), 'a')
         cb64 = base64.b64encode(c[0])
         return (0, cb64)
 
@@ -43,7 +43,7 @@ class Cryptogram(object):
         p = rsa_key.decrypt(c).decode()
         return (0, p)
 
-    def encrypt(self, key, filepath, mode=AES_CBC):
+    def encrypt(self, key, filepath, mode='AES-128-CBC'):
         self.log.info('prepare encrypt file : {} \nuse mode is :{} \n, Cipher is :{} '.format(filepath, mode, key))
         try:
             encrypt_with_mode = getattr(self, 'encrypt_file_with_' + C_TYPE[mode]['F'])
@@ -54,14 +54,18 @@ class Cryptogram(object):
             # CKey = key
             return encrypt_with_mode(CKey, filepath)
 
-    def decrypt(self, key, filepath, savefilepath, mode=AES_CBC):
+    def decrypt(self, key, filepath, savefilepath, nck=0, mode='AES-128-CBC'):
         self.log.info('prepare decrypt file : {} \nuse mode is :{} \n, Cipher is :{} '.format(filepath, mode, key))
         try:
             decrypt_with_mode = getattr(self, 'decrypt_file_with_' + C_TYPE[mode]['F'])
         except Exception as e:
             raise
         else:
-            CKey = self.convertKey(key, mode)
+            if nck == 0:
+                CKey = self.convertKey(key, mode)
+            else:
+                CKey = key
+            self.log.info(CKey)
             # CKey = key
             return decrypt_with_mode(CKey, filepath, out_filename=savefilepath)
 

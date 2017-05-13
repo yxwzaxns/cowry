@@ -65,10 +65,7 @@ class Download(threading.Thread, BaseSocket):
             else:
                 if self.fileinfo['encryption'] != 1:
                     # move file to download path
-                    saveFileName = utils.joinFilePath(self.saveFilePath_D,
-                                                      self.fileinfo['name'],
-                                                      self.fileinfo['postfix'])
-                    utils.moveFile(self.saveFilePath_E, saveFileName)
+                    utils.moveFile(self.saveFilePath_E, self.saveFilePath_D)
                 else:
                     self.decryptFile()
 
@@ -97,6 +94,7 @@ class Download(threading.Thread, BaseSocket):
             retInfo = self.crypt.decrypt(dec_cipher[1],
                                          self.saveFilePath_E,
                                          savefilepath=self.saveFilePath_D,
+                                         nck=1,
                                          mode=self.fileinfo['encryption_type'])
             if retInfo[0] == 0:
                 utils.deleteFile(self.saveFilePath_E)

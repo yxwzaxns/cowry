@@ -167,3 +167,13 @@ def getHostAddr():
 
 def importCert(path):
     return OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, path)
+
+def getCertInfo(path):
+    filehash = calculateHashCodeForFile(path)
+    with open(path, 'r') as f:
+        certfile = f.read()
+    cert = importCert(certfile)
+    cert_digest = cert.digest("sha256")
+    cert_info = {'digest': cert_digest.decode(),
+                 'filehash': filehash}
+    return cert_info

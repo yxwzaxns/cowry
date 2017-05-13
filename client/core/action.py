@@ -7,6 +7,7 @@ from resources.download import Ui_DownloadFileDialog
 from resources.openfile import Ui_Open_File
 from resources.closefile import Ui_Close_File
 from resources.transferfile import Ui_Transfer_File
+from resources.certinfo import Ui_Cert_Info
 from core.ftpClient import FTPClient
 from core.config import Settings
 from core.syslog import Syslog
@@ -64,6 +65,8 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
     def init_signal(self):
         self.actionloadLoginInfo.triggered.connect(self.setdefaultinfo)
         self.actiondeleteCertificate.triggered.connect(self.deleteCerts)
+        self.actionview_cert_info.triggered.connect(self.view_cert_info)
+        self.actionimport_cert.triggered.connect(self.import_cert)
 
         self.Encrypts.currentIndexChanged.connect(self.setEncryptStatus)
         self.Usepassword.clicked.connect(self.setCiphercode)
@@ -238,7 +241,7 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
             downloadFileInfo['filename'] = selectFiles[0].text(0)
             downloadFileInfo['postfix'] = selectFiles[0].text(1)
             downloadFileInfo['filehash'] = selectFiles[0].text(2)
-            downloadFileInfo['encryption_type'] = selectFiles[0].text(5)
+            downloadFileInfo['encryption_type'] = selectFiles[0].text(4)
             downloadFileName = str().join((downloadFileInfo['filename'],
                                            '.',
                                            downloadFileInfo['postfix']))
@@ -269,6 +272,7 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
                     if retInfo[0] == 0:
                         self.Infolist.addItem('file download successd')
                     else:
+                        self.download_dialog.close()
                         self.Infolist.addItem(retInfo[1])
 
     @auth
@@ -417,6 +421,7 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
         self.transferfile_dialog.ui.Transfer_Filename.setText(filename)
         self.transferfile_dialog.show()
 
+    @auth
     def file_delete(self):
         selectFiles = self.Filetree_Private.selectedItems()
         filehash = selectFiles[0].text(2)
@@ -449,6 +454,7 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
         self.openfile_dialog.ui.setupUi(self.openfile_dialog)
         self.openfile_dialog.show()
 
+    @auth
     def file_close_open(self):
         def sure():
             selectFile = self.Filetree_Private.selectedItems()
@@ -464,3 +470,22 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
         self.closefile_dialog.accept = sure
         self.closefile_dialog.ui.setupUi(self.closefile_dialog)
         self.closefile_dialog.show()
+
+    @auth
+    def view_cert_info(self):
+        certificate_name = str(self.Host.text().strip()) + '.crt'
+        cert_info = utils.getCertInfo(utils.joinFilePath(self.settings.certificates.certdirs, certificate_name))
+        def sure():
+            self.certInfo_dialog.close()
+
+        self.certInfo_dialog = QtWidgets.QDialog()
+        self.certInfo_dialog.ui = Ui_Cert_Info()
+        self.certInfo_dialog.accept = sure
+        self.certInfo_dialog.ui.setupUi(self.certInfo_dialog)
+        self.certInfo_dialog.ui.Signature.setText(cert_info['digest'])
+        self.certInfo_dialog.ui.Filehash.setText(cert_info['filehash'])
+        self.certInfo_dialog.show()
+
+    @auth
+    def import_cert(self):
+        pass

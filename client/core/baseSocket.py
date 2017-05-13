@@ -109,10 +109,10 @@ class BaseSocket(object):
                 recvfile = self.ctrlSock.recv(1024)
                 # self.log.info('receving data of file is : {:.2f}%'.format(recvedFileSize / filesize * 100))
                 f.write(recvfile)
-                self.log.info('start recv {} loop'.format(i))
-                self.log.info('this task need to loop {}, the last info size of info is : {}'.format(loop, extend))
+                # self.log.info('start recv {} loop'.format(i))
+                # self.log.info('this task need to loop {}, the last info size of info is : {}'.format(loop, extend))
                 self.signal.recv.emit(1)
-                self.log.info('emit 1')
+                # self.log.info('emit 1')
 
                 recvedFileSize += len(recvfile)
                 # self.ctrlSock.send(b'1') # receiving file
