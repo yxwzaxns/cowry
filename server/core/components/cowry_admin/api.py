@@ -37,6 +37,20 @@ def certs():
     cert_info = {'cert_digest_{}'.format('sha256'): cert_digest.decode(),
                  'cert_signature_algorithm': cert_signature_algorithm.decode()}
     return cert_info
+
+@app.route('/api/syslog')
+@login_required
+@json_response
+def syslog():
+    logs = d.session.query(schema.syslog.Syslog).all()
+    res = []
+    for l in logs:
+        res_t = {}
+        for i in l.__dict__:
+            res_t[i] = getattr(l, i)
+        del res_t['_sa_instance_state']
+        res.append(res_t)
+    return res, 200
 # class Status(Resource):
 #     def get(self, item):
 #         return {'hello': 'world'}

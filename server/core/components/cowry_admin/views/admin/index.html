@@ -1,5 +1,8 @@
 {% extends 'admin/master.html' %}
-
+{% block head %}
+<link href="/static/css/admin/dash.css" rel="stylesheet">
+<script src="/static/js/admin/index.js"></script>
+{% endblock %}
 {% block body %}
 <nav class="navbar navbar-default">
   <div class="container-fluid">
@@ -70,6 +73,31 @@
             </li>
           </ul>
         </div>
+      </div>
+    </div>
+  </div>
+  <div class="cow">
+    <div class="col-md-12">
+      <div class="panel panel-default">
+        <div class="panel-heading">系统日志</div>
+        <table class="table log">
+          <tr>
+            <th>id</th>
+            <th>uid</th>
+            <th>ip</th>
+            <th>event</th>
+            <th>time</th>
+          </tr>
+          <!-- <div class="log">
+          </div> -->
+          <!-- <tr>
+            <td>1</td>
+            <td>1</td>
+            <td>1</td>
+            <td>1</td>
+            <td>1</td>
+          </tr> -->
+        </table>
       </div>
     </div>
   </div>

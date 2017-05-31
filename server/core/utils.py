@@ -12,6 +12,7 @@ import re
 import socket
 import _thread
 import OpenSSL
+import redis
 
 
 def addAppPath(path):
@@ -177,3 +178,6 @@ def getCertInfo(path):
     cert_info = {'digest': cert_digest.decode(),
                  'filehash': filehash}
     return cert_info
+
+def send_info(info):
+    pass

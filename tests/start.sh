@@ -1,2 +1,4 @@
-!/bin/bash
-ls -a /usr/
+#!/bin/bash
+if [[ ! -f coor.html ]]; then
+  python3 ./a.py a
+fi

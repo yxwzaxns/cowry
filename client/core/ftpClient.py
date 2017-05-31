@@ -116,7 +116,7 @@ class FTPClient(BaseSocket):
                 if self.encryption:
                     filepath = enctryptedFilePath
 
-                self.uploadProcess = Upload(remoteDataInfo, filepath, uploadAuthCode)
+                self.uploadProcess = Upload(remoteDataInfo, filepath, uploadAuthCode, uploadCmdCode)
                 self.uploadProcess.signal.p.connect(self.setUpbarValue)
                 self.uploadProcess.start()
 

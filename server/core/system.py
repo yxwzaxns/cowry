@@ -2,6 +2,7 @@
 import socket
 import ssl
 import platform
+import redis
 from core.worker import Worker
 from core.database import Db
 from core.status import Status
@@ -164,6 +165,16 @@ class Server():
         # become a server socket
         self.serverSocket.listen(5)
 
+    def init_redis(self):
+        if self.settings.default.cluster == '0':
+            redis_host = '127.0.0.1'
+        else:
+            redis_host = self.settings.redis.host
+        self.r = redis.Redis(host=redis_host,
+                        port=int(self.settings.redis.port),
+                        db=int(self.settings.redis.db))
+        self.r.set('master_status','1')
+
     def init_setenv(self):
         # set host name
         if utils.verifyDomain(self.settings.server.bind_domain):
@@ -195,6 +206,7 @@ class Server():
         self.init_setenv()
         self.init_web_console()
         self.init_status()
+        self.init_redis()
         self.log.info('start run server')
         while True:
             (clientSocket, clientAddress) = self.serverSocket.accept()
@@ -238,5 +250,5 @@ class Server():
 
     def createWorker(self, clientSocket, address):
         # workerId = hashlib.md5(str(address).encode('utf8')).hexdigest()
-        worker = Worker(clientSocket, address, self.db.Session, sslContext=self.sslContext)
+        worker = Worker(clientSocket, address, self.db.Session, self.r, sslContext=self.sslContext)
         worker.start()

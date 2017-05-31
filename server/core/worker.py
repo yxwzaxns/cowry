@@ -11,17 +11,19 @@ from core import utils
 
 class Worker(threading.Thread, BaseSocket):
     """docstring for Worker."""
-    def __init__(self, client, address, db_session, sslContext= None):
+    def __init__(self, client, address, db_session, rd, sslContext= None):
         BaseSocket.__init__(self, clientSocket= client, clientAddress= address)
         threading.Thread.__init__(self)
         self.sslContext = sslContext
         self.authenticated = False
+        self.user_address = address
         self.settings = Settings()
-
+        self.r = rd
         # db init
         self.session = db_session()
         self.user = schema.user.User
         self.file = schema.file.File
+        self.syslog = schema.syslog.Syslog
 
 
     def run(self):
@@ -59,7 +61,26 @@ class Worker(threading.Thread, BaseSocket):
                 self.sendMsg('Not Login')
         return wrapper
 
+    def send_log(func):
+        """A decorator for auth worker action."""
+        def wrapper(self):
+            func(self)
+            try:
+                self.session.add(self.syslog(uid= self.userid,
+                                             ip= self.user_address[0],
+                                             event= str(self.recvInfo),
+                                             update_time= utils.getCurrentTime()
+                                             ))
+            except Exception as e:
+                self.log.info(str(e))
+            else:
+                self.log.info('recorder log')
+                self.session.commit()
+
+        return wrapper
+
     @auth
+    @send_log
     def upload(self):
         # recv info code {'info': "upload", "code": "", "filename": filename, "filesize": filesize, "hash": fileHashCode }
         uploadFileInfo = self.recvInfo
@@ -87,17 +108,21 @@ class Worker(threading.Thread, BaseSocket):
             remsg = {'info': 'upload', 'code': uploadFileInfo['code'], 'status': '1', 'reason': str(e)}
             self.sendMsg(remsg)
 
-        retInfo = self.createDataSock() #return (int, port)
-        if retInfo[0] == 1:
-            self.log.info('createDataSock fails: {}'.format(retInfo[1]))
-
-        data_channel_info = (self.settings.certificates.cn, retInfo[1])
         authToken = utils.generateAuthToken()
+        if self.settings.default.cluster == '1':
+            data_channel_info = ('127.0.0.1',2334)
+            self.r.set(authToken,0)
+        else:
+            retInfo = self.createDataSock() #return (int, port)
+            if retInfo[0] == 1:
+                self.log.info('createDataSock fails: {}'.format(retInfo[1]))
+            data_channel_info = (self.settings.server.bind_address, retInfo[1])
+
         remsg = {'info': 'upload', 'code': uploadFileInfo['code'], 'status': '0', 'token': authToken, 'dataAddress': data_channel_info}
         retInfo = self.sendMsg(remsg)
         if retInfo[0] == 1:
             self.log.info('sendMsg fails: {}'.format(retInfo[1]))
-        else:
+        elif self.settings.default.cluster != '1':
             if uploadFileInfo['encryption'] == 1:
                 uploadFileSize = uploadFileInfo['encsize']
             else:
@@ -106,6 +131,7 @@ class Worker(threading.Thread, BaseSocket):
             self.uploadProcess.start()
 
     @auth
+    @send_log
     def uploadComfirm(self):
         if self.recvInfo['status'] == '0':
             self.session.commit()
@@ -113,10 +139,12 @@ class Worker(threading.Thread, BaseSocket):
             self.session.rollback()
 
     @auth
+    @send_log
     def download(self):
         # recv info code {'info': 'download', 'code': '', 'filename': downloadFileName}
 
         downloadFileHash = self.recvInfo['filehash']
+        # downloadFileType = self.recvInfo['type']
         # baseFileName, postfix = utils.seperateFileName(downloadFileName)
         # downloadFileSize = self.recvInfo['filesize']
         # currentTime = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
@@ -133,29 +161,41 @@ class Worker(threading.Thread, BaseSocket):
             self.log.info('search file has : {}\'s'.format(len(fileInfo)))
             if len(fileInfo) == 1:
                 fileInfo = fileInfo[0]
-                retInfo = self.createDataSock() #return (int, tuple(ip,port))
-                if retInfo[0] == 1:
-                    self.log.info('createDataSock fails: {}'.format(retInfo[1]))
-
-                data_channel_info = (self.settings.certificates.cn, retInfo[1])
-                authToken = utils.generateAuthToken()
-                fileInfo = fileInfo.__dict__
-                del fileInfo['_sa_instance_state']
-                remsg = {'info': 'download', 'code': self.recvInfo['code'], 'status': '0', 'token': authToken, 'dataAddress': data_channel_info, 'fileinfo': fileInfo}
-                retInfo = self.sendMsg(remsg)
-                if retInfo[0] == 1:
-                    self.log.info('sendMsg fails: {}'.format(retInfo[1]))
-                else:
-                    downloadFilePath = utils.joinFilePath(self.settings.storage.datapath, fileInfo['hashcode'])
-                    self.downloadProcess = Download(self.sslContext, self.dataSocket, downloadFilePath, authToken)
-                    self.downloadProcess.start()
             elif len(fileInfo) >= 2:
-                pass
+                fileInfo = fileInfo[0]
             else:
                 remsg = {'info': 'download', 'code': self.recvInfo['code'], 'status': '1', 'reason': 'can\'t find download file'}
                 retInfo = self.sendMsg(remsg)
 
+            authToken = utils.generateAuthToken()
+
+            if self.settings.default.cluster == '1':
+                data_channel_info = ('127.0.0.1',2334)
+                self.r.set(authToken,0)
+            else:
+                retInfo = self.createDataSock() #return (int, tuple(ip,port))
+                if retInfo[0] == 1:
+                    self.log.info('createDataSock fails: {}'.format(retInfo[1]))
+                data_channel_info = (self.settings.server.bind_address, retInfo[1])
+
+            fileInfo = fileInfo.__dict__
+            del fileInfo['_sa_instance_state']
+            remsg = {'info': 'download',
+                     'code': self.recvInfo['code'],
+                     'status': '0', 'token': authToken,
+                     'dataAddress': data_channel_info,
+                     'fileinfo': fileInfo}
+            retInfo = self.sendMsg(remsg)
+            if retInfo[0] == 1:
+                self.log.info('sendMsg fails: {}'.format(retInfo[1]))
+            elif self.settings.default.cluster != '1':
+                downloadFilePath = utils.joinFilePath(self.settings.storage.datapath, fileInfo['hashcode'])
+                self.downloadProcess = Download(self.sslContext, self.dataSocket, downloadFilePath, authToken)
+                self.downloadProcess.start()
+
+
     @auth
+    @send_log
     def list(self):
         # listInfo = self.session.query(self.file).filter_by(uid= self.userid).all()
         files_list = self.session.query(self.file).filter(or_(and_(self.file.uid==self.userid, self.file.is_delete==0), and_(self.file.public==1, self.file.is_delete==0))).all()
@@ -171,6 +211,7 @@ class Worker(threading.Thread, BaseSocket):
         self.sendMsg(remsg)
 
     @auth
+    @send_log
     def openFile(self):
         try:
             openfile = self.session.query(self.file).filter(and_(self.file.uid==self.userid, self.file.hashcode==self.recvInfo['filehash'])).first()
@@ -183,6 +224,7 @@ class Worker(threading.Thread, BaseSocket):
         self.sendMsg(remsg)
 
     @auth
+    @send_log
     def closeFile(self):
         try:
             openfile = self.session.query(self.file).filter(and_(self.file.uid==self.userid, self.file.hashcode==self.recvInfo['filehash'])).first()
@@ -195,18 +237,20 @@ class Worker(threading.Thread, BaseSocket):
         self.sendMsg(remsg)
 
     @auth
+    @send_log
     def deleteFile(self):
         try:
             openfile = self.session.query(self.file).filter(and_(self.file.uid==self.userid, self.file.hashcode==self.recvInfo['filehash'])).first()
             openfile.is_delete = 1
             self.session.commit()
         except Exception as e:
-            remsg = {'info': 'closeFile', 'code': self.recvInfo['code'], 'status': '1', 'reason': str(e)}
+            remsg = {'info': 'deleteFile', 'code': self.recvInfo['code'], 'status': '1', 'reason': str(e)}
         else:
-            remsg = {'info': 'closeFile', 'code': self.recvInfo['code'], 'status': '0'}
+            remsg = {'info': 'deleteFile', 'code': self.recvInfo['code'], 'status': '0'}
         self.sendMsg(remsg)
 
     @auth
+    @send_log
     def getPubKey(self):
         try:
             user = self.session.query(self.user).filter_by(email=self.recvInfo['email']).first()
@@ -217,6 +261,7 @@ class Worker(threading.Thread, BaseSocket):
         self.sendMsg(remsg)
 
     @auth
+    @send_log
     def transferFile(self):
         try:
             user = self.session.query(self.user).filter_by(email=self.recvInfo['email']).first()
@@ -241,21 +286,25 @@ class Worker(threading.Thread, BaseSocket):
             remsg = {'info': 'transferFile', 'code': self.recvInfo['code'], 'status': '0'}
         self.sendMsg(remsg)
 
+    @send_log
     def login(self):
         res = self.session.query(self.user).filter_by(username= self.recvInfo['u']).first()
         if res and res.password == utils.calculateHashCodeForString(self.recvInfo['p']):
             self.username = res.username
             self.userid = res.id
             self.loginStatus = True
-
             remsg = {'info': 'login', 'code': self.recvInfo['code'], 'status': '0', 'uid': str(self.userid)}
             self.sendMsg(remsg)
+            #send info to web console
+            # self.recorder()
         else:
             remsg = {'info': 'login', 'code': self.recvInfo['code'], 'status': '1', 'reason': 'user not exist or authentication fails'}
             self.sendMsg(remsg)
     @auth
+    @send_log
     def logout(self):
         logoutInfo = {"info": "logout", "code": self.recvInfo['code'], 'status': '0'}
+        self.session.rollback()
         self.sendMsg(logoutInfo)
         self.close()
         self.exit()
