@@ -184,9 +184,11 @@ class BaseSocket(object):
             return (1, str(e))
         except Exception as e:
             return (1, str(e))
+        if len(recvInfo) == 0:
+            return (1, 'can\'t recevie info')
         tmpRecvInfo += recvInfo
 
-        while len(recvInfo) == int(self.settings.default.recv_cmd_buffer_size) or recvInfo.decode('utf8')[-1] in [':',',']:
+        while len(recvInfo) == int(self.settings.default.recv_cmd_buffer_size) or str(recvInfo)[-2] != '}':
             self.log.info('recv length of info is over default length, start recv extend info')
             try:
                 recvInfo = self.ctrlSock.recv(1024).strip()

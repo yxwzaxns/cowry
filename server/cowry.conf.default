@@ -1,7 +1,7 @@
 [DEFAULT]
 debug = True
 inited = 0
-cluster = 0
+cluster = 1
 send_file_buffer_size = 1024
 recv_file_buffer_size = 1024
 send_cmd_buffer_size = 1024
@@ -38,7 +38,7 @@ port = 3000
 
 [REDIS]
 host = redis
-port = 6666
+port = 6379
 db = 0
 
 [STORAGE]

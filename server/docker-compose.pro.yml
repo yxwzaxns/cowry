@@ -1,0 +1,10 @@
+version: '2'
+services:
+  cowry:
+    image: cowry
+    ports:
+     - "2333:2333"
+     - "3000:3000"
+    volumes:
+     - /tmp/certs:/cowry/certs
+     - /tmp/conf:/conf

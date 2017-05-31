@@ -1,0 +1,13 @@
+version: '2'
+services:
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cowry-worker:dev
+    depends_on:
+     - cowry
+    ports:
+     - "2334:2334"
+    volumes:
+     - /tmp/certs:/tmp/certs

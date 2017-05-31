@@ -1,0 +1,17 @@
+FROM python:3.6
+MAINTAINER i@aong.cn
+
+RUN pip3 install cryptography \
+                 pymysql \
+                 pyOpenSSL \
+                 redis \
+                 sqlalchemy \
+                 flask \
+                 flask-admin \
+                 flask-restful \
+                 flask_login  \
+                 flask_sqlalchemy  \
+                 raven  \
+                 redis  \
+                 gunicorn \
+                 gevent \

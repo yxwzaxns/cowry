@@ -1,0 +1,9 @@
+version: '2'
+services:
+  cowry:
+    image: python
+    ports:
+     - "2334:2334"
+    volumes:
+     - /tmp/certs:/cowry/certs
+     - $PWD:/cowry
