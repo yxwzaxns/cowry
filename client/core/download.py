@@ -45,7 +45,10 @@ class Download(threading.Thread, BaseSocket):
     def run(self):
         ret = self.createConnection()
         self.log.info(ret)
-        authCmdCode = {'info': 'downloadAuth', 'code': '', 'authtoken': self.authtoken}
+        authCmdCode = {'info': 'downloadAuth',
+                       'code': '',
+                       'authtoken': self.authtoken,
+                       'hash': self.fileinfo['hashcode']}
         retInfo = self.sendMsg(authCmdCode)
         if retInfo[0] == 1:
             self.log.info(retInfo[1])

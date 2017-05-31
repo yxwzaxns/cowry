@@ -1,2 +1,2 @@
-!/bin/bash
-ls -a /usr/
+#!/bin/bash
+echo 'a'

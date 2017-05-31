@@ -13,7 +13,7 @@ class UploadSignal(QObject):
 class Upload(threading.Thread, BaseSocket):
     """docstring for Upload."""
 
-    def __init__(self, remote, filepath, authtoken):
+    def __init__(self, remote, filepath, authtoken, file_info):
         BaseSocket.__init__(self, host=remote[0], port=remote[1])
         threading.Thread.__init__(self)
         # UploadSignal.__init__(self)
@@ -21,11 +21,12 @@ class Upload(threading.Thread, BaseSocket):
         self.filepath = filepath
         self.filename = utils.getBaseNameByPath(self.filepath)
         self.authtoken = authtoken
+        self.file_info = file_info
         self.step = 0
 
     def run(self):
         self.createConnection()
-        authCmdCode = {'info': 'uploadAuth', 'code': '', 'authtoken': self.authtoken}
+        authCmdCode = {'info': 'uploadAuth', 'code': '', 'authtoken': self.authtoken, 'file_info': self.file_info}
         retInfo = self.sendMsg(authCmdCode)
         if retInfo[0] == 1:
             self.log.info(retInfo[1])

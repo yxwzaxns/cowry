@@ -1,6 +1,7 @@
 [DEFAULT]
 debug = True
 inited = 0
+cluster = 1
 send_file_buffer_size = 1024
 recv_file_buffer_size = 1024
 send_cmd_buffer_size = 1024
@@ -12,7 +13,7 @@ bind_address = 0.0.0.0
 bind_port = 2333
 
 [CERTIFICATES]
-cn = 127.0.0.1
+cn = 0.0.0.0
 country = CN
 state = GX
 city = GL
@@ -32,11 +33,11 @@ charset = utf8
 df =
 
 [WEBCONSOLE]
-host = 127.0.0.1
+host = 0.0.0.0
 port = 3000
 
 [REDIS]
-host = 127.0.0.1
+host = redis
 port = 6379
 db = 0
 

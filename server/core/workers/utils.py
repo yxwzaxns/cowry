@@ -12,7 +12,7 @@ import re
 import socket
 import _thread
 import OpenSSL
-import redis
+import subprocess
 
 
 def addAppPath(path):
@@ -179,5 +179,5 @@ def getCertInfo(path):
                  'filehash': filehash}
     return cert_info
 
-def send_info(info):
-    pass
+def execShell(cmd):
+    subprocess.call(cmd)

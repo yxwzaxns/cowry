@@ -38,11 +38,11 @@ class BaseSocket(object):
         self.settings = Settings()
 
     def createConnection(self):
-        self.createSslConttext()
-        self.log.info('start createConnection')
+        ret = self.createSslConttext()
+        self.log.info('createSslConttext return {} ,start createConnection'.format(str(ret)))
         try:
             tmpSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.ctrlSock = self.sslContext.wrap_socket(tmpSock, server_hostname = self.host)
+            self.ctrlSock = self.sslContext.wrap_socket(tmpSock, server_hostname = '0.0.0.0')
             self.ctrlSock.connect((self.host, int(self.port)))
         except Exception as e:
             self.log.info(str(e))
@@ -56,9 +56,17 @@ class BaseSocket(object):
         self.sslContext = ssl.create_default_context()
         certFileName = "{}.crt".format(self.host)
         certFilePath = utils.joinFilePath(self.settings.certificates.certdirs, certFileName)
-
+        print('fuck1')
         if not utils.checkFileExists(certFilePath):
+            # get remote certificates
             self.acquire_remote_cert()
+        try:
+            # verify_cert
+            utils.verify_cert(certFilePath, self.host)
+        except Exception as e:
+            self.log.error(str(e))
+            return (1,str(e))
+        print('fuck2')
         try:
             self.sslContext.load_verify_locations(certFilePath)
         except Exception as e:
@@ -176,9 +184,11 @@ class BaseSocket(object):
             return (1, str(e))
         except Exception as e:
             return (1, str(e))
+        if len(recvInfo) == 0:
+            return (1, 'can\'t recevie info')
         tmpRecvInfo += recvInfo
 
-        while len(recvInfo) == int(self.settings.default.recv_cmd_buffer_size) or recvInfo.decode('utf8')[-1] in [':',',']:
+        while len(recvInfo) == int(self.settings.default.recv_cmd_buffer_size) or str(recvInfo)[-2] != '}':
             self.log.info('recv length of info is over default length, start recv extend info')
             try:
                 recvInfo = self.ctrlSock.recv(1024).strip()

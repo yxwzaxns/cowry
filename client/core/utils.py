@@ -9,6 +9,7 @@ import socket
 from ast import literal_eval
 import _thread
 import OpenSSL
+import requests
 
 def prettySize(num, suffix='B'):
     num = int(num)
@@ -141,3 +142,11 @@ def getCertInfo(path):
     cert_info = {'digest': cert_digest.decode(),
                  'filehash': filehash}
     return cert_info
+
+def verify_cert(path, api_path):
+    cert_info = getCertInfo(path)
+    ret = requests.get('http://{}:3000/api/certs'.format(api_path))
+    if rebuildDictFromBytes(ret.content)['cert_digest_sha256'] == cert_info['digest']:
+        return True
+    else:
+        return False

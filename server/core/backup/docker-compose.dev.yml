@@ -1,0 +1,19 @@
+version: '2'
+services:
+  backup:
+    build:
+      context: .
+      dockerfile: Dockerfile.backup
+    image: cowry-backup:dev
+    depends_on:
+      - redis
+    ports:
+     - "2200:22"
+    environment:
+     - SSH_USER=cowry
+    volumes:
+     - /tmp/cowry/certs:/certs
+  redis:
+    image: redis
+    ports:
+     - "6379:6379"

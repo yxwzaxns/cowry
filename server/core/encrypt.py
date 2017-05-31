@@ -33,6 +33,8 @@ class SSLCertSetting(object):
     def create_self_signed_cert(self, common_name):
         C_F = self.settings.certificates.certificate
         K_F = self.settings.certificates.privatekey
+        P_F = joinFilePath(getDirNameByPath(self.settings.certificates.privatekey),
+                                 'server.pub.key')
 
         if not exists(C_F) or not exists(K_F):
             k = crypto.PKey()
@@ -58,12 +60,15 @@ class SSLCertSetting(object):
         cert.set_pubkey(k)
 
         cert.sign(k, 'sha1')
-        
+
         with open(C_F, "wb") as f:
             f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
 
         with open(K_F, "wb") as f:
             f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, k))
+
+        with open(P_F, "wb") as f:
+            f.write(crypto.dump_publickey(crypto.FILETYPE_PEM, k))
 
     def validate_ssl_cert(self):
         certificate = getFileContent(self.settings.certificates.certificate)

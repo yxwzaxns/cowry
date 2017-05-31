@@ -22,7 +22,7 @@ class DbView(ModelView):
         return redirect(url_for('login', next=request.url, type='manager'))
 
 class FilesModelView(DbView):
-    column_list = ('id', 'uid', 'postfix', 'encryption_type', 'encsize', 'updatetime', 'size', 'name', 'encryption', 'public', 'hashcode')
+    column_list = ('id', 'uid', 'postfix', 'encryption_type', 'encsize', 'updatetime', 'size', 'name', 'encryption', 'public', 'hashcode','is_delete')
 
 class MyAdminIndexView(AdminIndexView):
     @expose('/')
@@ -32,10 +32,11 @@ class MyAdminIndexView(AdminIndexView):
             return redirect(url_for('login', next=request.url, type='manager'))
         return super(MyAdminIndexView, self).index()
 
-admin = Admin(app, name='Cowry Admin Console', index_view=MyAdminIndexView(), template_mode='bootstrap3')
+admin = Admin(app, name='Cowry Admin Console', index_view=MyAdminIndexView(), template_mode='bootstrap3', )
 admin.add_view(DbView(schema.manager.Manager, d.session))
 admin.add_view(DbView(schema.user.User, d.session))
 admin.add_view(FilesModelView(schema.file.File, d.session))
+admin.add_view(DbView(schema.syslog.Syslog, d.session))
 admin.add_view(rediscli.RedisCli(Redis()))
 
 # path = op.join(op.dirname(__file__), 'static')

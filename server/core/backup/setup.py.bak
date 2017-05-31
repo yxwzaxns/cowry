@@ -1,0 +1,16 @@
+import redis, os, time
+
+print('start set up redis info')
+
+print(os.listdir('/etc/ssh/'))
+
+r = redis.Redis(host='redis',port=6379,db=0)
+
+while r.ping() != True:
+    print('not connect redis, sleep 1 second')
+    time.sleep(1)
+
+with open('/etc/ssh/ssh_host_ecdsa_key.pub', 'r') as f:
+    p_key = f.read()
+
+r.set('backup_pkey', p_key)

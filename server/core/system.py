@@ -1,7 +1,10 @@
 """Cowry system core module."""
 import socket
 import ssl
+import time
 import platform
+import redis
+import stat, os
 from core.worker import Worker
 from core.database import Db
 from core.status import Status
@@ -146,6 +149,8 @@ class Server():
                 self.ssl.create_self_signed_cert(self.settings.certificates.cn)
             else:
                 self.log.error("can't read valid domain or IP adress from configure file, create a new certificate need it")
+            # set key own
+            os.chmod(path=self.settings.certificates.privatekey, mode=stat.S_IRUSR)
         # start load certificate
         # verify certificates
         if self.ssl.validate_ssl_cert():
@@ -163,6 +168,29 @@ class Server():
         self.serverSocket.bind((self.settings.server.bind_address, int(self.settings.server.bind_port)))
         # become a server socket
         self.serverSocket.listen(5)
+
+    def init_redis(self):
+
+        if self.settings.default.cluster == '0':
+            # redis_host = '127.0.0.1'
+            return 0
+        else:
+            redis_host = self.settings.redis.host
+
+        self.r = redis.Redis(host=redis_host,
+                        port=int(self.settings.redis.port),
+                        db=int(self.settings.redis.db))
+
+        for i in range(3):
+            if self.r.ping() == True:
+                continue
+            else:
+                time.sleep(1)
+                if i == 3:
+                    self.log.error('can\'t connect redis server')
+                    exit()
+
+        self.r.set('master_status','1')
 
     def init_setenv(self):
         # set host name
@@ -191,6 +219,7 @@ class Server():
             exit()
         self.init_db()
         self.init_ssl()
+        self.init_redis()
         self.init_socket()
         self.init_setenv()
         self.init_web_console()
