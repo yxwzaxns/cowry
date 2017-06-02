@@ -170,17 +170,14 @@ class Server():
         self.serverSocket.listen(5)
 
     def init_redis(self):
-
         if self.settings.default.cluster == '0':
             # redis_host = '127.0.0.1'
             return 0
         else:
             redis_host = self.settings.redis.host
-
         self.r = redis.Redis(host=redis_host,
                         port=int(self.settings.redis.port),
                         db=int(self.settings.redis.db))
-
         for i in range(3):
             if self.r.ping() == True:
                 continue
@@ -189,7 +186,6 @@ class Server():
                 if i == 3:
                     self.log.error('can\'t connect redis server')
                     exit()
-
         self.r.set('master_status','1')
 
     def init_setenv(self):

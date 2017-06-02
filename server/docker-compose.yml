@@ -11,7 +11,7 @@ services:
      - "2333:2333"
      - "3000:3000"
     volumes:
-     - /tmp/cowry/certs:/cowry/certs
+     - /Users/aong/workspace/git/cowry/server:/cowry/
      - /tmp/cowry/conf:/conf
   worker:
     build:

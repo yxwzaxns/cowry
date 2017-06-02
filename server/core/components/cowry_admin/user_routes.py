@@ -9,7 +9,17 @@ from utils import *
 @login_required
 def home():
     print('!!!!!!!{} ^^^ {} !!!!'.format(current_user.is_authenticated, current_user.username))
-    return render_template('home/index.html')
+    logs = d.session.query(schema.syslog.Syslog).filter_by(uid=current_user.id).all()
+    print(current_user.id)
+    res = []
+    for l in logs:
+        res_t = {}
+        for i in l.__dict__:
+            res_t[i] = getattr(l, i)
+        del res_t['_sa_instance_state']
+        res.append(res_t)
+        print('a',res)
+    return render_template('home/index.html', logs= res)
 
 @app.route('/home/settings', methods=['POST', 'GET'])
 @login_required

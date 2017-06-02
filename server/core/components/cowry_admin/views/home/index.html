@@ -54,19 +54,28 @@
                   <tr>
                     <th>#</th>
                     <th>IP</th>
-                    <th>Login-Time</th>
-                    <th>OS</th>
+                    <th>Event</th>
+                    <th>Time</th>
                     <th>Header</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
+                  <!-- <tr>
                     <td>1,001</td>
                     <td>Lorem</td>
                     <td>ipsum</td>
                     <td>dolor</td>
                     <td>sit</td>
+                  </tr> -->
+                  {% for log in logs %}
+                  <tr>
+                    <td>{{ log.id }}</td>
+                    <td>{{ log.ip }}</td>
+                    <td>{{ log.event }}</td>
+                    <td>{{ log.update_time }}</td>
+                    <td>sit</td>
                   </tr>
+                  {% endfor %}
                 </tbody>
               </table>
             </div>
