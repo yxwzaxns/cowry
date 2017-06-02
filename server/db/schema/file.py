@@ -18,8 +18,11 @@ class File(Base):
     quotes = Column(Integer(), DefaultClause('0'))
     is_delete = Column(Integer, DefaultClause('0'))
     public = Column(String(1))
+    location = Column(String(20))
     # encsize is size of file encrypted
     encsize = Column(String(20))
+    # enhashcode is hash of file md5
+    enhashcode = Column(String(32))
     # encryption is a token if a file is encrypted
     encryption = Column(Integer(), DefaultClause('0'))
     # type of encryption
