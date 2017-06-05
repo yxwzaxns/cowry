@@ -88,52 +88,66 @@ class Worker(threading.Thread, BaseSocket):
     @send_log
     def upload(self):
         # recv info code {'info': "upload", "code": "", "filename": filename, "filesize": filesize, "hash": fileHashCode }
-        uploadFileInfo = self.recvInfo
-        fileHashCode = uploadFileInfo['hash']
-        fileName, postfix = utils.seperateFileName(uploadFileInfo['filename'])
-        fileSize = uploadFileInfo['filesize']
-        currentTime = utils.getCurrentTime()
-
-        encryption = uploadFileInfo['encryption']
-        encryption_type = uploadFileInfo['encryption_type']
-        encsize = uploadFileInfo['encsize']
-        # to do
-        # to determeine whether have repeat value in db
+        # check file is exist
         try:
-            self.session.add(self.file(uid= self.userid,
-                                       name= fileName,
-                                       size= fileSize,
-                                       encryption= encryption,
-                                       encryption_type= encryption_type,
-                                       encsize= encsize,
-                                       hashcode= fileHashCode,
-                                       updatetime= currentTime,
-                                       postfix= postfix))
+            fileInfo = self.session.query(self.file).filter(and_(self.file.uid==self.userid, self.file.hashcode==self.recvInfo['hash'])).first()
+            # self.session.add(self.file(uid= self.userid, name= downloadFileName, size= downloadFileSize, hashcode= downloadFileHashCode,updatetime= currentTime, postfix= postfix))
         except Exception as e:
-            remsg = {'info': 'upload', 'code': uploadFileInfo['code'], 'status': '1', 'reason': str(e)}
+            remsg = {'info': 'upload', 'code': self.recvInfo['code'], 'status': '1', 'reason': str(e)}
             self.sendMsg(remsg)
-
-        authToken = utils.generateAuthToken()
-        if self.settings.default.cluster == '1':
-            data_channel_info = ('127.0.0.1',2334)
-            self.r.set(authToken,0)
         else:
-            retInfo = self.createDataSock() #return (int, port)
-            if retInfo[0] == 1:
-                self.log.info('createDataSock fails: {}'.format(retInfo[1]))
-            data_channel_info = (self.settings.server.bind_address, retInfo[1])
-
-        remsg = {'info': 'upload', 'code': uploadFileInfo['code'], 'status': '0', 'token': authToken, 'dataAddress': data_channel_info}
-        retInfo = self.sendMsg(remsg)
-        if retInfo[0] == 1:
-            self.log.info('sendMsg fails: {}'.format(retInfo[1]))
-        elif self.settings.default.cluster != '1':
-            if uploadFileInfo['encryption'] == 1:
-                uploadFileSize = uploadFileInfo['encsize']
+            if fileInfo:
+                self.log.info(fileInfo.__dict__)
+                remsg = {'info': 'upload', 'code': self.recvInfo['code'], 'status': '1', 'reason': 'file has exsited'}
+                self.sendMsg(remsg)
             else:
-                uploadFileSize = uploadFileInfo['filesize']
-            self.uploadProcess = Upload(self.sslContext, self.dataSocket, fileHashCode, uploadFileSize, authToken)
-            self.uploadProcess.start()
+                self.log.info('start create data of file')
+                uploadFileInfo = self.recvInfo
+                fileHashCode = uploadFileInfo['hash']
+                fileName, postfix = utils.seperateFileName(uploadFileInfo['filename'])
+                fileSize = uploadFileInfo['filesize']
+                currentTime = utils.getCurrentTime()
+
+                encryption = uploadFileInfo['encryption']
+                encryption_type = uploadFileInfo['encryption_type']
+                encsize = uploadFileInfo['encsize']
+                # to do
+                # to determeine whether have repeat value in db
+                try:
+                    self.session.add(self.file(uid= self.userid,
+                                               name= fileName,
+                                               size= fileSize,
+                                               encryption= encryption,
+                                               encryption_type= encryption_type,
+                                               encsize= encsize,
+                                               hashcode= fileHashCode,
+                                               updatetime= currentTime,
+                                               postfix= postfix))
+                except Exception as e:
+                    remsg = {'info': 'upload', 'code': uploadFileInfo['code'], 'status': '1', 'reason': str(e)}
+                    self.sendMsg(remsg)
+
+                authToken = utils.generateAuthToken()
+                if self.settings.default.cluster == '1':
+                    data_channel_info = ('127.0.0.1',2334)
+                    self.r.set(authToken,0)
+                else:
+                    retInfo = self.createDataSock() #return (int, port)
+                    if retInfo[0] == 1:
+                        self.log.info('createDataSock fails: {}'.format(retInfo[1]))
+                    data_channel_info = (self.settings.server.bind_address, retInfo[1])
+
+                remsg = {'info': 'upload', 'code': uploadFileInfo['code'], 'status': '0', 'token': authToken, 'dataAddress': data_channel_info}
+                retInfo = self.sendMsg(remsg)
+                if retInfo[0] == 1:
+                    self.log.info('sendMsg fails: {}'.format(retInfo[1]))
+                elif self.settings.default.cluster != '1':
+                    if uploadFileInfo['encryption'] == 1:
+                        uploadFileSize = uploadFileInfo['encsize']
+                    else:
+                        uploadFileSize = uploadFileInfo['filesize']
+                    self.uploadProcess = Upload(self.sslContext, self.dataSocket, fileHashCode, uploadFileSize, authToken)
+                    self.uploadProcess.start()
 
     @auth
     @send_log
@@ -294,7 +308,7 @@ class Worker(threading.Thread, BaseSocket):
     @send_log
     def login(self):
         res = self.session.query(self.user).filter_by(username= self.recvInfo['u']).first()
-        if res and res.password == utils.calculateHashCodeForString(self.recvInfo['p']):
+        if res and res.password == self.recvInfo['p']:
             self.username = res.username
             self.userid = res.id
             self.loginStatus = True

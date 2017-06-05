@@ -1,0 +1,44 @@
+version: '2'
+services:
+  cowry:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cowry:dev
+    depends_on:
+     - redis
+    ports:
+     - "2333:2333"
+     - "3000:3000"
+    volumes:
+     - /Users/aong/workspace/git/cowry/server:/cowry/
+  worker:
+    build:
+      context: ./core/workers
+      dockerfile: Dockerfile
+    image: cowry-worker:dev
+    depends_on:
+     - cowry
+    ports:
+     - "2334:2334"
+    volumes:
+     - /tmp/cowry/certs:/certs
+     - /tmp/cowry/data:/data
+  backup:
+    build:
+      context: ./core/backup
+      dockerfile: Dockerfile
+    image: cowry-backup:dev
+    depends_on:
+      - cowry
+    ports:
+     - "2200:22"
+    environment:
+     - SSH_USER=cowry
+    volumes:
+     - /tmp/cowry/certs:/certs
+     - /tmp/cowry/backup_data:/data
+  redis:
+    image: redis
+    ports:
+     - "6379:6379"

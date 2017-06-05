@@ -172,6 +172,8 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
                     self.Infolist.addItem(str().join(('Encryption with : ', loginInfo[2][2:29])))
                     self.client.id = loginInfo[3]
                     self.loginStatus = True
+                    status = str().join(('密钥协商：', loginInfo[2][2:11],'数据加密：',loginInfo[2][12:22],'数据签名：',loginInfo[2][23:29]))
+                    self.statusBar.showMessage(status)
                     self.refresh()
                 else:
                     # print(type(loginInfo),type(loginInfo[1]), loginInfo)
@@ -216,12 +218,13 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
             self.upload_dialog.ui.setupUi(self.upload_dialog)
             self.upload_dialog.ui.Filename.setText(filename)
             self.upload_dialog.ui.Progress.setValue(0)
-            self.upload_dialog.show()
+
 
             self.client.upbar = self.upload_dialog
             retInfo = self.client.upload(filepath)
             if retInfo[0] == 0:
-                self.Infolist.addItem('file upload successd')
+                self.upload_dialog.show()
+                self.Infolist.addItem('file is uploading')
             else:
                 self.Infolist.addItem(retInfo[1])
 
@@ -346,7 +349,7 @@ class Action_MainWindow(QMainWindow, Ui_MainWindow):
             self.quit()
 
     def setdefaultinfo(self):
-        self.Host.setText('127.0.0.1')
+        self.Host.setText('0.0.0.0')
         self.Port.setText('2333')
         self.Username.setText('aong')
         self.Password.setText('1234')

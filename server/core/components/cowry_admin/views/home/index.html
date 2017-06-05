@@ -47,7 +47,7 @@
           <div class="dash current">
             <h1 class="page-header">Dashboard</h1>
 
-            <h2 class="sub-header">Login History</h2>
+            <h2 class="sub-header">History Logs</h2>
             <div class="table-responsive">
               <table class="table table-striped">
                 <thead>
@@ -56,7 +56,6 @@
                     <th>IP</th>
                     <th>Event</th>
                     <th>Time</th>
-                    <th>Header</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -73,7 +72,6 @@
                     <td>{{ log.ip }}</td>
                     <td>{{ log.event }}</td>
                     <td>{{ log.update_time }}</td>
-                    <td>sit</td>
                   </tr>
                   {% endfor %}
                 </tbody>

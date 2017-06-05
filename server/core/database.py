@@ -44,6 +44,7 @@ class Db(object):
         self.session = self.Session()
 
     def createTables(self):
+        print('start create tables')
         for table in self.tables:
             if not getattr(self, table).__table__.exists(self.engine):
                 try:
