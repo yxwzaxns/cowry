@@ -47,26 +47,33 @@
           <div class="dash current">
             <h1 class="page-header">Dashboard</h1>
 
-            <h2 class="sub-header">Login History</h2>
+            <h2 class="sub-header">History Logs</h2>
             <div class="table-responsive">
               <table class="table table-striped">
                 <thead>
                   <tr>
                     <th>#</th>
                     <th>IP</th>
-                    <th>Login-Time</th>
-                    <th>OS</th>
-                    <th>Header</th>
+                    <th>Event</th>
+                    <th>Time</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
+                  <!-- <tr>
                     <td>1,001</td>
                     <td>Lorem</td>
                     <td>ipsum</td>
                     <td>dolor</td>
                     <td>sit</td>
+                  </tr> -->
+                  {% for log in logs %}
+                  <tr>
+                    <td>{{ log.id }}</td>
+                    <td>{{ log.ip }}</td>
+                    <td>{{ log.event }}</td>
+                    <td>{{ log.update_time }}</td>
                   </tr>
+                  {% endfor %}
                 </tbody>
               </table>
             </div>

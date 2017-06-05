@@ -32,6 +32,10 @@ def calculateHashCodeForFile(filepath):
         return (1, str(e))
     return fileHashCode
 
+def calculateHashCodeForString(string, method='md5'):
+    """pass."""
+    return getattr(hashlib, method)(string.encode('utf8')).hexdigest()
+
 def check_public_key(key):
     # key = base64.b64decode(line.strip().split()[1].encode('ascii'))
     # fp_plain = hashlib.md5(key).hexdigest()

@@ -21,6 +21,12 @@ app = Flask('cowry_admin',
 
 app.settings = Settings()
 app.utils = utils
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://{user}:{password}@{host}:{port}/{dbname}?charset={charset}'.format(user='root',
+                                                                                                                            # password='1234',
+                                                                                                                            # host='125.217.53.144',
+                                                                                                                            # port=3306,
+                                                                                                                            # dbname='cowry',
+                                                                                                                            # charset='utf8')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///{}'.format(app.settings.database.df)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.debug = True

@@ -11,8 +11,7 @@ services:
      - "2333:2333"
      - "3000:3000"
     volumes:
-     - /tmp/cowry/certs:/cowry/certs
-     - /tmp/cowry/conf:/conf
+     - /tmp/cowry/db:/cowry/db/data
   worker:
     build:
       context: ./core/workers

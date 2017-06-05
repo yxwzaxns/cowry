@@ -9,10 +9,10 @@ WORKDIR /cowry
 
 RUN pip3 install -r requirements.txt
 
-COPY docker-entrypoint.sh /cowry/entrypoint.sh
+COPY docker-entrypoint.sh /cowry/docker-entrypoint.sh
 
-RUN chmod a+x /cowry/entrypoint.sh
-ENTRYPOINT ["/cowry/entrypoint.sh"]
+RUN chmod a+x /cowry/docker-entrypoint.sh
+ENTRYPOINT ["/cowry/docker-entrypoint.sh"]
 
 EXPOSE 2333
 EXPOSE 3000

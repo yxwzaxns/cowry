@@ -28,7 +28,7 @@ class FTPClient(BaseSocket):
 
     def login(self):
         self.log.info('start login')
-        loginCmdCode = {'info': 'login', 'code': '1234', 'u': self.username, 'p': self.password}
+        loginCmdCode = {'info': 'login', 'code': '1234', 'u': self.username, 'p': utils.calculateHashCodeForString(self.password)}
         loginInfo = self.sendMsg(loginCmdCode)
         if loginInfo[0] == 1:
             self.log.info(loginInfo[1])
