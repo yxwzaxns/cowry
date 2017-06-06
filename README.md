@@ -12,7 +12,7 @@ Cowry is an open source project to transfer files security.
 ## Features
 * Encryption base on TLS
 * Encrypt local files in a variety of ways
-* Do not need to leave a password to share files securely
+* Not need to leave a password to share files securely
 * Friendly interface
 
 
@@ -55,3 +55,9 @@ pip3 install -r requirements.txt
 
 python3 client.py
 ```
+
+## Contributing
+Welcome to Contribute code to this project, Please make sure to read the [GitFlow](https://datasift.github.io/gitflow/IntroducingGitFlow.html) Guide before making a pull request.
+
+## License
+[MIT](https://opensource.org/licenses/MIT)
