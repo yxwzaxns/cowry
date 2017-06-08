@@ -12,9 +12,10 @@ services:
      - "3000:3000"
     volumes:
      - /tmp/cowry/db:/cowry/db/data
+     - /tmp/cowry/certs:/cowry/certs
   worker:
     build:
-      context: ./core/workers
+      context: ./core/components/workers
       dockerfile: Dockerfile
     image: cowry-worker:dev
     depends_on:
@@ -26,7 +27,7 @@ services:
      - /tmp/cowry/data:/data
   backup:
     build:
-      context: ./core/backup
+      context: ./core/components/backup
       dockerfile: Dockerfile
     image: cowry-backup:dev
     depends_on:
@@ -41,4 +42,4 @@ services:
   redis:
     image: redis
     ports:
-     - "6379:6379"
+     - "6379"
