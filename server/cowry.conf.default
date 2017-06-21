@@ -1,7 +1,7 @@
 [DEFAULT]
 debug = True
 inited = 0
-cluster = 0
+cluster = 1
 send_file_buffer_size = 1024
 recv_file_buffer_size = 1024
 send_cmd_buffer_size = 1024
@@ -24,7 +24,7 @@ certificate =
 
 [DATABASE]
 type = sqlite
-host = 127.0.0.1
+host = mysql
 port = 3306
 user = root
 password = 1234

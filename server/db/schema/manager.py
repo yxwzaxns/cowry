@@ -10,8 +10,8 @@ class Manager(Base):
 
     id = Column(Integer, primary_key=True)
     uuid = Column(String(32))
-    username = Column(String(10))
-    email = Column(String(10))
+    username = Column(String(20))
+    email = Column(String(50))
     password = Column(String(50))
 
     @property

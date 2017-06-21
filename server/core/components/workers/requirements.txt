@@ -2,3 +2,4 @@ cryptography
 pymysql
 pyOpenSSL
 redis
+python-etcd

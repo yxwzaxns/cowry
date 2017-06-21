@@ -12,4 +12,4 @@ class Syslog(Base):
     uid = Column(String(32))
     ip = Column(String(32))
     event = Column(String(100))
-    update_time = Column(String(20))
+    update_time = Column(String(30))

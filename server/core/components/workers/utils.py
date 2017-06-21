@@ -132,9 +132,9 @@ def copyfile(src, dst):
     else:
         return (0, 'ok')
 
-def getenv(name):
+def getenv(name, d=None):
     """pass."""
-    return os.getenv(name)
+    return os.getenv(name, d)
 
 def setenv(name, value):
     """pass."""
