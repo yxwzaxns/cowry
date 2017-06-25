@@ -32,10 +32,10 @@ setup(
     cowry_client = client.client:main
     """,
     classifiers=[
-        'License :: MIT',
+        'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
-        'Topic :: Internet :: File Transfer Servers',
+        'Topic :: Internet :: File Transfer Protocol (FTP)',
     ],
     long_description=long_description,
 )

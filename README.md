@@ -1,9 +1,7 @@
 # Cowry: A Secure Distributed FTP System (Beta)
 
-[![PyPI version]][PyPI]
-
-[![Build Status]][Travis CI]
-
+[![PyPI](https://img.shields.io/pypi/v/cowry.svg)]()
+[![Build Status](https://travis-ci.org/yxwzaxns/cowry.svg?branch=master)](https://travis-ci.org/yxwzaxns/cowry)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/8290e2c0bc824966948f26cfbbf6eb23)](https://www.codacy.com/app/yxwzaxns/cowry?utm_source=github.com&utm_medium=referral&utm_content=yxwzaxns/cowry&utm_campaign=badger)
 [![Code Climate](https://codeclimate.com/github/yxwzaxns/cowry/badges/gpa.svg)](https://codeclimate.com/github/yxwzaxns/cowry)
 
@@ -23,16 +21,11 @@ Cowry is an open source project to transfer files security.
 ## Install Cowry Server
 ### Standard mode ( all in one )
 ```
+pip3 install cowry
 
-git clone https://github.com/yxwzaxns/cowry.git
+cowry_server -n
 
-cd cowry/server
-
-pip3 install -r requirements.txt
-
-python3 server.py -n
-
-python3 server.py -s
+cowry_server -s
 
 ```
 ### Distributed mode
@@ -51,13 +44,10 @@ docker-compose up
 
 ## Usage
 ```
-git clone https://github.com/yxwzaxns/cowry.git
+pip3 install cowry
 
-cd cowry/client
+cowry_client
 
-pip3 install -r requirements.txt
-
-python3 client.py
 ```
 
 ## Contributing
