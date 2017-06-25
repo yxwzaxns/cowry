@@ -7,6 +7,8 @@ services:
     image: cowry:dev
     depends_on:
      - redis
+     - etcd
+     - mysql
     ports:
      - "2333:2333"
      - "3000:3000"
@@ -14,7 +16,7 @@ services:
      - /Users/aong/workspace/git/cowry/server:/cowry/
   worker:
     build:
-      context: ./core/workers
+      context: ./core/components/workers
       dockerfile: Dockerfile
     image: cowry-worker:dev
     depends_on:
@@ -22,11 +24,11 @@ services:
     ports:
      - "2334:2334"
     volumes:
-     - /tmp/cowry/certs:/certs
+     - /Users/aong/workspace/git/cowry/server/certs:/certs
      - /tmp/cowry/data:/data
   backup:
     build:
-      context: ./core/backup
+      context: ./core/components/backup
       dockerfile: Dockerfile
     image: cowry-backup:dev
     depends_on:
@@ -36,9 +38,29 @@ services:
     environment:
      - SSH_USER=cowry
     volumes:
-     - /tmp/cowry/certs:/certs
+     - /Users/aong/workspace/git/cowry/server/certs:/certs
      - /tmp/cowry/backup_data:/data
+  etcd:
+    image: elcolio/etcd
+    volumes:
+      - "/tmp/cowry/etcd:/data"
+  etcd-borwser:
+    image: buddho/etcd-browser
+    ports:
+      - "8000:8000"
+    environment:
+      - ETCD_HOST=etcd
+      - ETCD_PORT=2379
   redis:
     image: redis
     ports:
      - "6379:6379"
+  mysql:
+    image: mysql
+    environment:
+      - MYSQL_DATABASE=cowry
+      - MYSQL_ROOT_PASSWORD=1234
+    volumes:
+      - "/tmp/cowry/mysql-data:/var/lib/mysql"
+    ports:
+      - "3307:3306"

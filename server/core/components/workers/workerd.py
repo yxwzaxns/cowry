@@ -4,14 +4,11 @@ import socket
 import ssl
 import redis
 import time
-# import platform
 from worker import Worker
-# from core.database import Db
-# from core.status import Status
 from syslog import Syslog
-# from core.config import Settings
-# from core.console import WebConsole
-# from core.encrypt import SSLCertSetting
+from etcd_store import etcd_wait_ready
+from etcd_store import etcd_mkdir
+from etcd_store import etcd_client
 import utils
 
 class Workerd():
@@ -29,6 +26,11 @@ class Workerd():
         while self.r.get('master_status') != b'1':
             time.sleep(1)
         self.log.info('get master info, start work with slave')
+        # init_etcd
+        if etcd_wait_ready():
+            worker_uuid = utils.generateGUID()
+            etcd_mkdir('workers')
+            # etcd_set('/workers/{}'.format(worker_uuid),)
 
     def init_ssl(self):
         self.sslContext = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)

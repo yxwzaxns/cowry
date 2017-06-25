@@ -10,13 +10,13 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     uuid = Column(String(32))
-    username = Column(String(10))
-    email = Column(String(10))
+    username = Column(String(30))
+    email = Column(String(50))
     password = Column(String(50))
-    createtime = Column(String(20))
-    lastlogintime = Column(String(20))
+    createtime = Column(String(30))
+    lastlogintime = Column(String(30))
     active = Column(Integer, DefaultClause('1')) # 1 : active ; 0 disable
-    pubkey = Column(Text(), DefaultClause('None'))
+    pubkey = Column(Text())
 
     @property
     def is_active(self):

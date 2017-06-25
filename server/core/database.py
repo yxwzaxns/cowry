@@ -26,6 +26,7 @@ class Db(object):
 
     def initDB(self):
         if self.settings.database.type == 'mysql':
+            print('use mysql database')
             import pymysql
             DBURI = MYSQL_URI.format( user= self.settings.database.user,
                                       password= self.settings.database.password,
@@ -34,6 +35,7 @@ class Db(object):
                                       dbname= self.settings.database.dbname,
                                       charset= self.settings.database.charset)
         elif self.settings.database.type == 'sqlite':
+            print('use sqlite database')
             import sqlite3
             DBURI = SQLITE_URI.format(dbfile= self.settings.database.df)
         self.conn = DBURI

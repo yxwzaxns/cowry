@@ -15,7 +15,7 @@ parser.add_argument("-q", "--quiet", help="don't echo system status", action="st
 parser.add_argument("-w", "--webconsole", help="open cowry console of web", action="store_true")
 args = parser.parse_args()
 
-if __name__ == '__main__':
+def main():
     # currentPath = os.path.dirname(os.path.realpath(__file__))
     # utils.setenv('COWRY_ROOT', currentPath)
     # utils.addAppPath(currentPath)
@@ -51,3 +51,6 @@ if __name__ == '__main__':
 
     server = Server()
     getattr(server, cmd)()
+
+if __name__ == '__main__':
+    main()
