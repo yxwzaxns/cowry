@@ -1,44 +1,41 @@
 """
 Cowry
 -----
-Cowry is a FTPS system
-
-run it:
-.. code:: bash
-    $ pip install cowry
-     * Running on http://localhost:2333/
+Cowry is a secure distributed file transfer and share system
 
 """
-import re
-import ast
+import codecs
 from setuptools import setup, find_packages
 
+version = '0.0.1'
+
+with codecs.open('README.rst', encoding='utf-8') as f:
+    long_description = f.read()
+
+with open('requirements.txt') as f:
+    reqs = f.read().splitlines()
+
 setup(
-    name='Cowry',
-    version='0.1al',
-    url='https://github.com/yxwzaxns/cowry',
+    name="cowry",
+    version=version,
     license='MIT',
+    description="a secure distributed file transfer and share system",
     author='aong',
     author_email='yxwzaxns@gmail.com',
-    description='A Secure FTPS system',
-    long_description=__doc__,
-    packages=find_packages(exclude=['client', 'server']),
+    url='https://github.com/yxwzaxns/cowry',
+    packages=find_packages(exclude=['examples', 'tests', 'docs']),
     include_package_data=True,
-    zip_safe=False,
-    platforms='Linux,MacOS,Windows',
-    install_requires=[
-        'PyQt5'
-    ],
+    install_requires=reqs,
+    entry_points="""
+    [console_scripts]
+    cowry_server = server.server:main
+    cowry_client = client.client:main
+    """,
     classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: MIT License',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3.5'
+        'License :: MIT',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
+        'Topic :: Internet :: File Transfer Servers',
     ],
-    keywords='FTPS',
-    entry_points='''
-
-    '''
+    long_description=long_description,
 )

@@ -14,8 +14,7 @@ parser.add_argument("-v", "--version", help="show version of cowry client", acti
 parser.add_argument("-c", "--config", help="declare config path where cowry client will read from")
 args = parser.parse_args()
 
-if __name__ == '__main__':
-    os.sys.path.append('.')
+def main():
     cmd = 'start'
 
     if args.config:
@@ -24,7 +23,7 @@ if __name__ == '__main__':
         if utils.checkFileExists(defaultConfigPath):
             utils.setenv('COWRY_CONFIG', defaultConfigPath)
     else:
-        currentPath = utils.getCwd()
+        currentPath = os.path.dirname(os.path.realpath(__file__))
         utils.setenv('COWRY_ROOT', currentPath)
         defaultConfigPath = utils.joinFilePath(currentPath, 'cowry.conf')
         utils.setenv('COWRY_CONFIG', defaultConfigPath)
@@ -33,3 +32,6 @@ if __name__ == '__main__':
     prog = Action_MainWindow()
     getattr(prog, cmd)()
     os.sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()

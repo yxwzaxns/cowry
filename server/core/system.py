@@ -130,9 +130,9 @@ class Server():
     def init_web_console(self):
         # up redis
         # set app root path into redis
-        if utils.getenv('COWRY_WEB_CONSOLE') == 'YES':
-            self.log.info('start init server web console')
-            WebConsole.start()
+        # if utils.getenv('COWRY_WEB_CONSOLE') == 'YES':
+        self.log.info('start init server web console')
+        WebConsole.start()
 
 
     def init_ssl(self):

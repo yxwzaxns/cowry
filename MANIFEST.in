@@ -1,0 +1,3 @@
+recursive-include server *.txt *.py *.default *.css *.js *.html *.map
+recursive-include client *.txt *.py *.default
+prune examples/tests/docs

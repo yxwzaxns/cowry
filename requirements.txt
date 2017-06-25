@@ -1,0 +1,14 @@
+sqlalchemy
+cryptography
+pymysql
+pyOpenSSL
+flask
+flask-admin
+flask-restful
+flask_login
+flask_sqlalchemy
+raven
+redis
+gunicorn
+gevent
+PyQt5
